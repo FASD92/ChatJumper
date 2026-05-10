@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "ChatJumper",
+  "version": "0.1.0",
+  "description": "Jump to the latest user question in ChatGPT.",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Jump to latest question"
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "jump-to-latest-user-message": {
+      "suggested_key": {
+        "default": "Alt+J",
+        "mac": "Command+J"
+      },
+      "description": "Jump to the latest user question"
+    }
+  }
+}
+
