@@ -16,7 +16,8 @@ export interface QuestionNavigator {
   reset(): void;
 }
 
-const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.35;
+const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.5;
+const CURRENT_TARGET_EXCLUSION_PX = 24;
 
 export function createQuestionNavigator(
   options: QuestionNavigatorOptions = {}
@@ -43,14 +44,22 @@ export function selectNextUserMessageTarget(
   }
 
   const viewportHeight = options.viewportHeight ?? window.innerHeight;
-  const thresholdTop = viewportHeight * DEFAULT_VIEWPORT_THRESHOLD_RATIO;
+  const thresholdCenter =
+    viewportHeight * DEFAULT_VIEWPORT_THRESHOLD_RATIO -
+    CURRENT_TARGET_EXCLUSION_PX;
   const candidatesAboveThreshold = targets.filter(
-    (target) => target.getBoundingClientRect().top < thresholdTop
+    (target) => getVerticalCenter(target) < thresholdCenter
   );
   const target =
     candidatesAboveThreshold.at(-1) ?? targets[targets.length - 1];
 
   return createSelection(target, targets.length);
+}
+
+function getVerticalCenter(target: HTMLElement): number {
+  const rect = target.getBoundingClientRect();
+
+  return rect.top + rect.height / 2;
 }
 
 function createSelection(

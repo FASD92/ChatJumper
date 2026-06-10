@@ -8,9 +8,9 @@ import {
 
 describe("selectNextUserMessageTarget", () => {
   it("selects the latest message above the current viewport threshold", () => {
-    const first = createMessageAtTop(-1600);
-    const second = createMessageAtTop(-900);
-    const latest = createMessageAtTop(-80);
+    const first = createMessageAtCenter(-1600);
+    const second = createMessageAtCenter(-900);
+    const latest = createMessageAtCenter(-80);
     const targets = [first, second, latest];
 
     const selection = selectNextUserMessageTarget(targets, {
@@ -21,9 +21,9 @@ describe("selectNextUserMessageTarget", () => {
   });
 
   it("selects the previous message after the latest message is centered", () => {
-    const first = createMessageAtTop(-1200);
-    const previous = createMessageAtTop(-200);
-    const latest = createMessageAtTop(500);
+    const first = createMessageAtCenter(-1200);
+    const previous = createMessageAtCenter(420);
+    const latest = createMessageAtCenter(520);
 
     const selection = selectNextUserMessageTarget([first, previous, latest], {
       viewportHeight: 1000
@@ -32,9 +32,24 @@ describe("selectNextUserMessageTarget", () => {
     expect(selection?.target).toBe(previous);
   });
 
+  it("does not skip the nearest previous message just below the old top threshold", () => {
+    const first = createMessageAtCenter(-1200);
+    const nearestPrevious = createMessageAtCenter(430);
+    const latest = createMessageAtCenter(520);
+
+    const selection = selectNextUserMessageTarget(
+      [first, nearestPrevious, latest],
+      {
+        viewportHeight: 1000
+      }
+    );
+
+    expect(selection?.target).toBe(nearestPrevious);
+  });
+
   it("falls back to the latest message when no message is above the threshold", () => {
-    const first = createMessageAtTop(600);
-    const latest = createMessageAtTop(900);
+    const first = createMessageAtCenter(600);
+    const latest = createMessageAtCenter(900);
 
     const selection = selectNextUserMessageTarget([first, latest], {
       viewportHeight: 1000
@@ -44,30 +59,36 @@ describe("selectNextUserMessageTarget", () => {
   });
 
   it("uses the current viewport on every navigator call", () => {
-    const first = createMessageAtTop(-1200);
-    const previous = createMessageAtTop(-200);
-    const latest = createMessageAtTop(500);
+    const first = createMessageAtCenter(-1200);
+    const previous = createMessageAtCenter(420);
+    const latest = createMessageAtCenter(520);
     const navigator = createQuestionNavigator({
       getViewportHeight: () => 1000
     });
 
     expect(navigator.next([first, previous, latest])?.target).toBe(previous);
 
-    setMessageTop(latest, -80);
+    setMessageCenter(latest, -80);
 
     expect(navigator.next([first, previous, latest])?.target).toBe(latest);
   });
 });
 
-function createMessageAtTop(top: number): HTMLElement {
+function createMessageAtCenter(centerY: number): HTMLElement {
   const element = document.createElement("article");
-  setMessageTop(element, top);
+  setMessageCenter(element, centerY);
   return element;
 }
 
-function setMessageTop(element: HTMLElement, top: number): void {
+function setMessageCenter(element: HTMLElement, centerY: number): void {
+  const height = 100;
+  const top = centerY - height / 2;
+  const bottom = centerY + height / 2;
+
   element.getBoundingClientRect = () =>
     ({
-      top
+      top,
+      bottom,
+      height
     }) as DOMRect;
 }

@@ -1,5 +1,6 @@
 export const CHATJUMPER_COMPOSER_BUTTON_CLASS = "chatjumper-composer-button";
 const BUTTON_GAP_PX = 8;
+const BUTTON_RIGHT_INSET_PX = 8;
 const FALLBACK_BUTTON_SIZE_PX = 42;
 
 const CHATGPT_VOICE_BUTTON_SELECTORS = [
@@ -35,12 +36,18 @@ export function syncComposerButton(
 
   const button = existing ?? createComposerButton(options.root);
   button.onclick = options.onClick;
+  const composer = getComposerForm(anchor);
 
-  if (anchor.nextElementSibling !== button) {
-    anchor.after(button);
+  if (!composer) {
+    existing?.remove();
+    return null;
   }
 
-  sizeButtonLikeAnchor(button, anchor);
+  if (button.parentElement !== composer) {
+    composer.append(button);
+  }
+
+  positionButtonInComposer(button, anchor, composer);
   return button;
 }
 
@@ -81,7 +88,7 @@ function findVoiceButton(root: Document | HTMLElement): HTMLButtonElement | null
 }
 
 function isInsideComposer(candidate: HTMLButtonElement): boolean {
-  const composer = candidate.closest("form");
+  const composer = getComposerForm(candidate);
 
   if (!composer) {
     return false;
@@ -92,19 +99,33 @@ function isInsideComposer(candidate: HTMLButtonElement): boolean {
   );
 }
 
-function sizeButtonLikeAnchor(
+function positionButtonInComposer(
   button: HTMLButtonElement,
-  anchor: HTMLButtonElement
+  anchor: HTMLButtonElement,
+  composer: HTMLFormElement
 ): void {
-  const rect = anchor.getBoundingClientRect();
-  const size = Math.round(rect.height) || FALLBACK_BUTTON_SIZE_PX;
+  const anchorRect = anchor.getBoundingClientRect();
+  const composerRect = composer.getBoundingClientRect();
+  const size = Math.round(anchorRect.height) || FALLBACK_BUTTON_SIZE_PX;
+  const desiredLeft = anchorRect.right - composerRect.left + BUTTON_GAP_PX;
+  const maxLeft = composerRect.width - size - BUTTON_RIGHT_INSET_PX;
+  const left = Math.min(desiredLeft, Math.max(BUTTON_RIGHT_INSET_PX, maxLeft));
+  const top = anchorRect.top - composerRect.top;
 
-  button.style.position = "";
-  button.style.left = "";
-  button.style.top = "";
-  button.style.marginLeft = `${BUTTON_GAP_PX}px`;
+  if (!composer.style.position) {
+    composer.style.position = "relative";
+  }
+
+  button.style.position = "absolute";
+  button.style.left = `${Math.round(left)}px`;
+  button.style.top = `${Math.round(top)}px`;
+  button.style.marginLeft = "";
   button.style.width = `${size}px`;
   button.style.height = `${size}px`;
+}
+
+function getComposerForm(candidate: HTMLElement): HTMLFormElement | null {
+  return candidate.closest("form");
 }
 
 function getOwnerDocument(root: Document | HTMLElement): Document {

@@ -290,9 +290,13 @@ function createTarget(): {
 }
 
 function setTargetTop(element: HTMLElement, top: number): void {
+  const height = 100;
+
   element.getBoundingClientRect = () =>
     ({
-      top
+      top,
+      height,
+      bottom: top + height
     }) as DOMRect;
 }
 
