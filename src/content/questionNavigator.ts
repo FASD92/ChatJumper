@@ -67,11 +67,15 @@ export function selectNextUserMessageTarget(
     candidatesAboveThreshold.at(-1) ?? targets[targets.length - 1];
   const previousSelection = options.previousSelection ?? null;
 
-  if (!previousSelection || previousSelection.targetCount !== targets.length) {
+  if (!previousSelection) {
     return createSelection(viewportTarget, targets);
   }
 
-  const cachedPreviousIndex = previousSelection.targetIndex;
+  const currentPreviousIndex = targets.indexOf(previousSelection.target);
+  const cachedPreviousIndex =
+    currentPreviousIndex >= 0
+      ? currentPreviousIndex
+      : previousSelection.targetIndex;
 
   if (
     cachedPreviousIndex < 0 ||

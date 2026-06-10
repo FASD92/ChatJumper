@@ -23,13 +23,10 @@ const DEFAULT_ADAPTERS: readonly ChatAdapter[] = [chatGptAdapter];
 const RESYNC_DELAY_MS = 250;
 const NEAR_BOTTOM_THRESHOLD_PX = 120;
 const NAVIGATION_RESET_KEYS = new Set([
-  "ArrowDown",
-  "ArrowUp",
   "End",
   "Home",
   "PageDown",
-  "PageUp",
-  " "
+  "PageUp"
 ]);
 const FALLBACK_ERROR_RESPONSE: RuntimeResponse = {
   ok: false,
@@ -170,14 +167,6 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
     return true;
   });
 
-  root.addEventListener("wheel", resetQuestionNavigation, {
-    capture: true,
-    passive: true
-  });
-  root.addEventListener("touchmove", resetQuestionNavigation, {
-    capture: true,
-    passive: true
-  });
   root.addEventListener(
     "keydown",
     (event) => {

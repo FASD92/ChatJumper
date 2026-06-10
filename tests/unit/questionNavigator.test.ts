@@ -136,6 +136,52 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next(targets)?.target).toBe(first);
   });
 
+  it("keeps walking by cached index when the newest target disappears from the DOM list", () => {
+    const sixth = createMessageAtCenter(420);
+    const fifth = createMessageAtCenter(520);
+    const fourth = createMessageAtCenter(520);
+    const third = createMessageAtCenter(520);
+    const second = createMessageAtCenter(420);
+    const latest = createMessageAtCenter(-80);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const initialTargets = [sixth, fifth, fourth, third, second, latest];
+
+    expect(navigator.next(initialTargets)?.target).toBe(latest);
+
+    setMessageCenter(latest, 520);
+
+    expect(navigator.next(initialTargets)?.target).toBe(second);
+
+    const latestUnmountedTargets = [sixth, fifth, fourth, third, second];
+
+    expect(navigator.next(latestUnmountedTargets)?.target).toBe(third);
+  });
+
+  it("uses the previous target identity when the current DOM list shifts around it", () => {
+    const sixth = createMessageAtCenter(420);
+    const fifth = createMessageAtCenter(520);
+    const fourth = createMessageAtCenter(520);
+    const third = createMessageAtCenter(520);
+    const second = createMessageAtCenter(420);
+    const latest = createMessageAtCenter(-80);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const initialTargets = [sixth, fifth, fourth, third, second, latest];
+
+    expect(navigator.next(initialTargets)?.target).toBe(latest);
+
+    setMessageCenter(latest, 520);
+
+    expect(navigator.next(initialTargets)?.target).toBe(second);
+
+    const shiftedTargets = [sixth, fifth, third, second];
+
+    expect(navigator.next(shiftedTargets)?.target).toBe(third);
+  });
+
   it("keeps walking by cached index when ChatGPT remounts message elements", () => {
     const navigator = createQuestionNavigator({
       getViewportHeight: () => 1000
