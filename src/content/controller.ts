@@ -21,13 +21,6 @@ import {
 
 const DEFAULT_ADAPTERS: readonly ChatAdapter[] = [chatGptAdapter];
 const RESYNC_DELAY_MS = 250;
-const NEAR_BOTTOM_THRESHOLD_PX = 120;
-const NAVIGATION_RESET_KEYS = new Set([
-  "End",
-  "Home",
-  "PageDown",
-  "PageUp"
-]);
 const FALLBACK_ERROR_RESPONSE: RuntimeResponse = {
   ok: false,
   reason: "NOT_FOUND"
@@ -62,7 +55,6 @@ export interface BootContentOptions {
   storage?: typeof chrome.storage;
   mutationObserverFactory?: typeof MutationObserver;
   scheduleTimeout?: (callback: () => void, delayMs: number) => unknown;
-  getIsNearConversationBottom?: () => boolean;
 }
 
 export function runConfiguredJump(
@@ -130,9 +122,6 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
   const mutationObserverFactory =
     options.mutationObserverFactory ?? MutationObserver;
   const questionNavigator = createQuestionNavigator({
-    getIsNearConversationBottom:
-      options.getIsNearConversationBottom ??
-      (() => isNearConversationBottom(root)),
     getViewportHeight: () => root.defaultView?.innerHeight ?? window.innerHeight
   });
   let settings = await readSettingsSafely(storageArea);
@@ -166,16 +155,6 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
 
     return true;
   });
-
-  root.addEventListener(
-    "keydown",
-    (event) => {
-      if (NAVIGATION_RESET_KEYS.has(event.key)) {
-        resetQuestionNavigation();
-      }
-    },
-    { capture: true }
-  );
 
   storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "local" || !changes[SETTINGS_STORAGE_KEY]) {
@@ -229,10 +208,6 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
       }
     });
   }
-
-  function resetQuestionNavigation(): void {
-    questionNavigator.reset();
-  }
 }
 
 function isCurrentSiteEnabled(settings: ChatJumperSettings): boolean {
@@ -281,14 +256,4 @@ function getUserMessagesForAdapter(
   adapter: ChatAdapter
 ): ((root: Document | HTMLElement) => HTMLElement[]) | undefined {
   return adapter.id === "chatgpt" ? findChatGptUserMessages : undefined;
-}
-
-function isNearConversationBottom(root: Document): boolean {
-  const view = root.defaultView ?? window;
-  const scroller = root.scrollingElement ?? root.documentElement;
-  const scrollTop = view.scrollY || scroller.scrollTop;
-  const visibleBottom = scrollTop + view.innerHeight;
-  const distanceFromBottom = scroller.scrollHeight - visibleBottom;
-
-  return distanceFromBottom <= NEAR_BOTTOM_THRESHOLD_PX;
 }

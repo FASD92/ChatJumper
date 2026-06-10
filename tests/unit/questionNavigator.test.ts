@@ -7,274 +7,96 @@ import {
 } from "../../src/content/questionNavigator";
 
 describe("selectNextUserMessageTarget", () => {
-  it("selects the latest message above the current viewport threshold", () => {
-    const first = createMessageAtCenter(-1600);
-    const second = createMessageAtCenter(-900);
-    const latest = createMessageAtCenter(-80);
-    const targets = [first, second, latest];
+  it("selects the latest user question that has passed above the top reference line", () => {
+    const oldest = createMessageWithBounds(-1600, -1500);
+    const previous = createMessageWithBounds(-400, -300);
+    const latest = createMessageWithBounds(-120, -40);
 
-    const selection = selectNextUserMessageTarget(targets, {
+    const selection = selectNextUserMessageTarget([oldest, previous, latest], {
       viewportHeight: 1000
     });
 
     expect(selection?.target).toBe(latest);
   });
 
-  it("selects the previous message after the latest message is centered", () => {
-    const first = createMessageAtCenter(-1200);
-    const previous = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(520);
+  it("selects the previous question when the latest question has not passed the top reference line", () => {
+    const older = createMessageWithBounds(-1200, -1100);
+    const previous = createMessageWithBounds(20, 80);
+    const latest = createMessageWithBounds(100, 300);
 
-    const selection = selectNextUserMessageTarget([first, previous, latest], {
+    const selection = selectNextUserMessageTarget([older, previous, latest], {
       viewportHeight: 1000
     });
 
     expect(selection?.target).toBe(previous);
   });
 
-  it("does not skip the nearest previous message just below the old top threshold", () => {
-    const first = createMessageAtCenter(-1200);
-    const nearestPrevious = createMessageAtCenter(430);
-    const latest = createMessageAtCenter(520);
+  it("falls back to the latest question when no question has passed the top reference line", () => {
+    const previous = createMessageWithBounds(180, 260);
+    const latest = createMessageWithBounds(600, 700);
 
-    const selection = selectNextUserMessageTarget(
-      [first, nearestPrevious, latest],
-      {
-        viewportHeight: 1000
-      }
-    );
-
-    expect(selection?.target).toBe(nearestPrevious);
-  });
-
-  it("falls back to the latest message when no message is above the threshold", () => {
-    const first = createMessageAtCenter(600);
-    const latest = createMessageAtCenter(900);
-
-    const selection = selectNextUserMessageTarget([first, latest], {
+    const selection = selectNextUserMessageTarget([previous, latest], {
       viewportHeight: 1000
     });
 
     expect(selection?.target).toBe(latest);
   });
 
-  it("uses the current viewport after the navigation sequence is reset", () => {
-    const first = createMessageAtCenter(-1200);
-    const previous = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(520);
+  it("uses the current viewport on every repeated button press", () => {
+    const third = createMessageWithBounds(-1200, -1100);
+    const second = createMessageWithBounds(-200, 80);
+    const latest = createMessageWithBounds(-120, -40);
     const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-
-    expect(navigator.next([first, previous, latest])?.target).toBe(previous);
-
-    setMessageCenter(latest, -80);
-    navigator.reset();
-
-    expect(navigator.next([first, previous, latest])?.target).toBe(latest);
-  });
-
-  it("walks to the exact previous question without skipping multiple older questions", () => {
-    const sixth = createMessageAtCenter(-2600);
-    const fifth = createMessageAtCenter(-2100);
-    const fourth = createMessageAtCenter(-1600);
-    const third = createMessageAtCenter(-1100);
-    const second = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(-80);
-    const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-    const targets = [sixth, fifth, fourth, third, second, latest];
-
-    expect(navigator.next(targets)?.target).toBe(latest);
-
-    setMessageCenter(latest, 520);
-    setMessageCenter(second, 420);
-
-    expect(navigator.next(targets)?.target).toBe(second);
-
-    setMessageCenter(second, 520);
-    setMessageCenter(third, 420);
-
-    expect(navigator.next(targets)?.target).toBe(third);
-  });
-
-  it("uses remembered sequence to avoid skipping when the next previous question is below the viewport threshold", () => {
-    const sixth = createMessageAtCenter(-2600);
-    const fifth = createMessageAtCenter(-2100);
-    const fourth = createMessageAtCenter(-1600);
-    const third = createMessageAtCenter(520);
-    const second = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(-80);
-    const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-    const targets = [sixth, fifth, fourth, third, second, latest];
-
-    expect(navigator.next(targets)?.target).toBe(latest);
-
-    setMessageCenter(latest, 520);
-
-    expect(navigator.next(targets)?.target).toBe(second);
-
-    setMessageCenter(second, 520);
-
-    expect(navigator.next(targets)?.target).toBe(third);
-  });
-
-  it("keeps walking by cached index when the viewport still points at a newer question", () => {
-    const first = createMessageAtCenter(620);
-    const second = createMessageAtCenter(620);
-    const latest = createMessageAtCenter(620);
-    const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-    const targets = [first, second, latest];
-
-    expect(navigator.next(targets)?.target).toBe(latest);
-    expect(navigator.next(targets)?.target).toBe(second);
-    expect(navigator.next(targets)?.target).toBe(first);
-  });
-
-  it("keeps walking by cached index when the newest target disappears from the DOM list", () => {
-    const sixth = createMessageAtCenter(420);
-    const fifth = createMessageAtCenter(520);
-    const fourth = createMessageAtCenter(520);
-    const third = createMessageAtCenter(520);
-    const second = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(-80);
-    const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-    const initialTargets = [sixth, fifth, fourth, third, second, latest];
-
-    expect(navigator.next(initialTargets)?.target).toBe(latest);
-
-    setMessageCenter(latest, 520);
-
-    expect(navigator.next(initialTargets)?.target).toBe(second);
-
-    const latestUnmountedTargets = [sixth, fifth, fourth, third, second];
-
-    expect(navigator.next(latestUnmountedTargets)?.target).toBe(third);
-  });
-
-  it("uses the previous target identity when the current DOM list shifts around it", () => {
-    const sixth = createMessageAtCenter(420);
-    const fifth = createMessageAtCenter(520);
-    const fourth = createMessageAtCenter(520);
-    const third = createMessageAtCenter(520);
-    const second = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(-80);
-    const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-    const initialTargets = [sixth, fifth, fourth, third, second, latest];
-
-    expect(navigator.next(initialTargets)?.target).toBe(latest);
-
-    setMessageCenter(latest, 520);
-
-    expect(navigator.next(initialTargets)?.target).toBe(second);
-
-    const shiftedTargets = [sixth, fifth, third, second];
-
-    expect(navigator.next(shiftedTargets)?.target).toBe(third);
-  });
-
-  it("keeps walking by cached index when ChatGPT remounts message elements", () => {
-    const navigator = createQuestionNavigator({
-      getViewportHeight: () => 1000
-    });
-    const initialTargets = [
-      createMessageAtCenter(-2600),
-      createMessageAtCenter(-2100),
-      createMessageAtCenter(-1600),
-      createMessageAtCenter(520),
-      createMessageAtCenter(420),
-      createMessageAtCenter(-80)
-    ];
-
-    expect(navigator.next(initialTargets)?.target).toBe(initialTargets[5]);
-
-    const remountedTargets = [
-      createMessageAtCenter(-2600),
-      createMessageAtCenter(-2100),
-      createMessageAtCenter(-1600),
-      createMessageAtCenter(420),
-      createMessageAtCenter(520),
-      createMessageAtCenter(520)
-    ];
-
-    expect(navigator.next(remountedTargets)?.target).toBe(remountedTargets[4]);
-
-    const remountedAgainTargets = [
-      createMessageAtCenter(-2600),
-      createMessageAtCenter(-2100),
-      createMessageAtCenter(420),
-      createMessageAtCenter(420),
-      createMessageAtCenter(520),
-      createMessageAtCenter(620)
-    ];
-
-    expect(navigator.next(remountedAgainTargets)?.target).toBe(
-      remountedAgainTargets[3]
-    );
-  });
-
-  it("does not let a persistent bottom signal trap navigation on the latest question", () => {
-    const isNearBottom = true;
-    const third = createMessageAtCenter(-1200);
-    const second = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(-80);
-    const navigator = createQuestionNavigator({
-      getIsNearConversationBottom: () => isNearBottom,
       getViewportHeight: () => 1000
     });
 
     expect(navigator.next([third, second, latest])?.target).toBe(latest);
 
-    setMessageCenter(latest, 520);
+    setMessageBounds(latest, 360, 680);
+    setMessageBounds(second, -160, 80);
 
     expect(navigator.next([third, second, latest])?.target).toBe(second);
 
-    setMessageCenter(second, 520);
-    setMessageCenter(third, 420);
+    setMessageBounds(second, 360, 680);
+    setMessageBounds(third, -160, 80);
 
     expect(navigator.next([third, second, latest])?.target).toBe(third);
   });
 
-  it("resets to latest when the user scrolls back down near the latest question", () => {
-    const second = createMessageAtCenter(420);
-    const latest = createMessageAtCenter(-80);
+  it("uses the current viewport after a small wheel movement between the latest and previous question", () => {
+    const previous = createMessageWithBounds(-160, 80);
+    const latest = createMessageWithBounds(100, 300);
     const navigator = createQuestionNavigator({
       getViewportHeight: () => 1000
     });
-    const targets = [second, latest];
 
-    expect(navigator.next(targets)?.target).toBe(latest);
+    expect(navigator.next([previous, latest])?.target).toBe(previous);
+  });
 
-    setMessageCenter(latest, 520);
+  it("uses a smaller reference line on short viewports", () => {
+    const previous = createMessageWithBounds(40, 80);
+    const latest = createMessageWithBounds(90, 160);
 
-    expect(navigator.next(targets)?.target).toBe(second);
+    const selection = selectNextUserMessageTarget([previous, latest], {
+      viewportHeight: 180
+    });
 
-    setMessageCenter(latest, -80);
-    navigator.reset();
-
-    expect(navigator.next(targets)?.target).toBe(latest);
+    expect(selection?.target).toBe(previous);
   });
 });
 
-function createMessageAtCenter(centerY: number): HTMLElement {
+function createMessageWithBounds(top: number, bottom: number): HTMLElement {
   const element = document.createElement("article");
-  setMessageCenter(element, centerY);
+  setMessageBounds(element, top, bottom);
   return element;
 }
 
-function setMessageCenter(element: HTMLElement, centerY: number): void {
-  const height = 100;
-  const top = centerY - height / 2;
-  const bottom = centerY + height / 2;
+function setMessageBounds(
+  element: HTMLElement,
+  top: number,
+  bottom: number
+): void {
+  const height = bottom - top;
 
   element.getBoundingClientRect = () =>
     ({

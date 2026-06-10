@@ -80,8 +80,7 @@ describe("runConfiguredJump", () => {
     ]);
     const questionNavigator = {
       next: vi.fn((targets: HTMLElement[]) => ({
-        target: targets[questionNavigator.next.mock.calls.length === 1 ? 2 : 1],
-        targetCount: targets.length
+        target: targets[questionNavigator.next.mock.calls.length === 1 ? 2 : 1]
       }))
     };
 
@@ -260,13 +259,12 @@ describe("bootContent", () => {
     expect(runtime.listener).toBeTypeOf("function");
   });
 
-  it("keeps command navigation moving to previous questions when the bottom signal stays true", async () => {
+  it("moves by the current viewport position on repeated command requests", async () => {
     const runtime = createRuntime();
     const storage = createStorage(DEFAULT_SETTINGS);
     const first = appendChatGptUserMessage("first question");
     const previous = appendChatGptUserMessage("previous question");
     const latest = appendChatGptUserMessage("latest question");
-    const isNearBottom = true;
 
     setTargetTop(first.element, -1200);
     setTargetTop(previous.element, -200);
@@ -279,18 +277,18 @@ describe("bootContent", () => {
       runtime: runtime as unknown as typeof chrome.runtime,
       storage: storage as unknown as typeof chrome.storage,
       mutationObserverFactory: FakeMutationObserver,
-      scheduleTimeout: vi.fn(),
-      getIsNearConversationBottom: () => isNearBottom
+      scheduleTimeout: vi.fn()
     });
 
     await sendJumpRequest(runtime);
 
     setTargetTop(latest.element, 500);
+    setTargetTop(previous.element, -20);
 
     await sendJumpRequest(runtime);
 
     setTargetTop(previous.element, 500);
-    setTargetTop(first.element, 420);
+    setTargetTop(first.element, -20);
 
     await sendJumpRequest(runtime);
 
@@ -323,11 +321,12 @@ describe("bootContent", () => {
     await sendJumpRequest(runtime);
 
     setTargetTop(latest.element, 500);
+    setTargetTop(previous.element, -20);
 
     await sendJumpRequest(runtime);
 
     setTargetTop(previous.element, 500);
-    setTargetTop(first.element, 420);
+    setTargetTop(first.element, -20);
     document.dispatchEvent(new WheelEvent("wheel", { deltaY: 200 }));
 
     await sendJumpRequest(runtime);
@@ -337,7 +336,7 @@ describe("bootContent", () => {
     expect(first.scrollIntoView).toHaveBeenCalledOnce();
   });
 
-  it("resets command navigation to the current viewport after an explicit page scroll key", async () => {
+  it("uses the current viewport after moving back near the latest question", async () => {
     const runtime = createRuntime();
     const storage = createStorage(DEFAULT_SETTINGS);
     const first = appendChatGptUserMessage("first question");
@@ -361,11 +360,11 @@ describe("bootContent", () => {
     await sendJumpRequest(runtime);
 
     setTargetTop(latest.element, 500);
+    setTargetTop(previous.element, -20);
 
     await sendJumpRequest(runtime);
 
     setTargetTop(latest.element, -80);
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "PageDown" }));
 
     await sendJumpRequest(runtime);
 

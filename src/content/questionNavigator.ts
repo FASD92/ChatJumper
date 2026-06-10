@@ -1,49 +1,30 @@
 export interface UserMessageTargetSelection {
   target: HTMLElement;
-  targetCount: number;
-  targetIndex: number;
 }
 
 export interface QuestionNavigatorOptions {
-  getIsNearConversationBottom?: () => boolean;
   getViewportHeight?: () => number;
 }
 
 export interface SelectNextUserMessageTargetOptions {
-  previousSelection?: UserMessageTargetSelection | null;
   viewportHeight?: number;
 }
 
 export interface QuestionNavigator {
   next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null;
-  reset(): void;
 }
 
 const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.5;
-const CURRENT_TARGET_EXCLUSION_PX = 24;
+const PASSED_QUESTION_REFERENCE_Y_PX = 120;
 
 export function createQuestionNavigator(
   options: QuestionNavigatorOptions = {}
 ): QuestionNavigator {
-  let previousSelection: UserMessageTargetSelection | null = null;
-
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
-      if (!previousSelection && options.getIsNearConversationBottom?.()) {
-        previousSelection = selectLatestUserMessageTarget(targets);
-        return previousSelection;
-      }
-
-      previousSelection = selectNextUserMessageTarget(targets, {
-        previousSelection,
+      return selectNextUserMessageTarget(targets, {
         viewportHeight: options.getViewportHeight?.() ?? window.innerHeight
       });
-
-      return previousSelection;
-    },
-
-    reset(): void {
-      previousSelection = null;
     }
   };
 }
@@ -56,64 +37,31 @@ export function selectNextUserMessageTarget(
     return null;
   }
 
-  const viewportHeight = options.viewportHeight ?? window.innerHeight;
-  const thresholdCenter =
-    viewportHeight * DEFAULT_VIEWPORT_THRESHOLD_RATIO -
-    CURRENT_TARGET_EXCLUSION_PX;
-  const candidatesAboveThreshold = targets.filter(
-    (target) => getVerticalCenter(target) < thresholdCenter
+  const referenceY = getReferenceY(options.viewportHeight ?? window.innerHeight);
+  const passedTargets = targets.filter(
+    (target) => getVerticalBottom(target) < referenceY
   );
   const viewportTarget =
-    candidatesAboveThreshold.at(-1) ?? targets[targets.length - 1];
-  const previousSelection = options.previousSelection ?? null;
+    passedTargets.at(-1) ?? targets[targets.length - 1];
 
-  if (!previousSelection) {
-    return createSelection(viewportTarget, targets);
-  }
-
-  const currentPreviousIndex = targets.indexOf(previousSelection.target);
-  const cachedPreviousIndex =
-    currentPreviousIndex >= 0
-      ? currentPreviousIndex
-      : previousSelection.targetIndex;
-
-  if (
-    cachedPreviousIndex < 0 ||
-    cachedPreviousIndex >= targets.length
-  ) {
-    return createSelection(viewportTarget, targets);
-  }
-
-  const target =
-    cachedPreviousIndex > 0
-      ? targets[cachedPreviousIndex - 1]
-      : targets[targets.length - 1];
-  return createSelection(target, targets);
+  return createSelection(viewportTarget);
 }
 
-function selectLatestUserMessageTarget(
-  targets: readonly HTMLElement[]
-): UserMessageTargetSelection | null {
-  if (targets.length === 0) {
-    return null;
-  }
-
-  return createSelection(targets[targets.length - 1], targets);
-}
-
-function getVerticalCenter(target: HTMLElement): number {
+function getVerticalBottom(target: HTMLElement): number {
   const rect = target.getBoundingClientRect();
 
-  return rect.top + rect.height / 2;
+  return rect.bottom;
 }
 
-function createSelection(
-  target: HTMLElement,
-  targets: readonly HTMLElement[]
-): UserMessageTargetSelection {
+function getReferenceY(viewportHeight: number): number {
+  return Math.min(
+    PASSED_QUESTION_REFERENCE_Y_PX,
+    viewportHeight * DEFAULT_VIEWPORT_THRESHOLD_RATIO
+  );
+}
+
+function createSelection(target: HTMLElement): UserMessageTargetSelection {
   return {
-    target,
-    targetCount: targets.length,
-    targetIndex: targets.indexOf(target)
+    target
   };
 }
