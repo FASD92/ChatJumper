@@ -19,7 +19,9 @@ export type JumpEngineResult =
 export interface JumpEngineOptions {
   root?: Document | HTMLElement;
   highlightClassName?: string;
+  highlightEnabled?: boolean;
   highlightDurationMs?: number;
+  smoothScroll?: boolean;
   scheduleTimeout?: (callback: () => void, delayMs: number) => unknown;
 }
 
@@ -39,12 +41,14 @@ export function jumpToLatestUserMessage(
   }
 
   target.scrollIntoView({
-    behavior: "smooth",
+    behavior: options.smoothScroll === false ? "auto" : "smooth",
     block: "center",
     inline: "nearest"
   });
 
-  flashTarget(target, options);
+  if (options.highlightEnabled !== false) {
+    flashTarget(target, options);
+  }
 
   return {
     ok: true,
