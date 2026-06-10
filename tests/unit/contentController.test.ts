@@ -7,6 +7,7 @@ import {
   handleRuntimeRequest,
   runConfiguredJump
 } from "../../src/content/controller";
+import { createQuestionNavigator } from "../../src/content/questionNavigator";
 import { JUMP_TO_LATEST_USER_MESSAGE } from "../../src/shared/messages";
 import { DEFAULT_SETTINGS, type ChatJumperSettings } from "../../src/shared/settings";
 
@@ -66,6 +67,44 @@ describe("runConfiguredJump", () => {
       "Could not find your latest question."
     );
   });
+
+  it("moves to the latest question first and previous questions on repeated runs", () => {
+    const first = createTarget();
+    const second = createTarget();
+    const latest = createTarget();
+    const adapter = createAdapter(latest.element);
+    const getUserMessages = vi.fn(() => [
+      first.element,
+      second.element,
+      latest.element
+    ]);
+    const questionNavigator = {
+      next: vi.fn((targets: HTMLElement[]) => ({
+        target: targets[questionNavigator.next.mock.calls.length === 1 ? 2 : 1],
+        targetCount: targets.length
+      }))
+    };
+
+    runConfiguredJump({
+      adapter,
+      root: document,
+      settings: DEFAULT_SETTINGS,
+      showToast: vi.fn(),
+      getUserMessages,
+      questionNavigator
+    });
+    runConfiguredJump({
+      adapter,
+      root: document,
+      settings: DEFAULT_SETTINGS,
+      showToast: vi.fn(),
+      getUserMessages,
+      questionNavigator
+    });
+
+    expect(latest.scrollIntoView).toHaveBeenCalledOnce();
+    expect(second.scrollIntoView).toHaveBeenCalledOnce();
+  });
 });
 
 describe("handleRuntimeRequest", () => {
@@ -114,6 +153,33 @@ describe("handleRuntimeRequest", () => {
       status: "JUMPED",
       adapter: "chatgpt"
     });
+  });
+
+  it("moves to previous questions on repeated command requests", async () => {
+    const first = createTarget();
+    const latest = createTarget();
+    const adapter = createAdapter(latest.element);
+    const questionNavigator = createQuestionNavigator();
+    const request = {
+      type: JUMP_TO_LATEST_USER_MESSAGE,
+      source: "command" as const
+    };
+    const commonOptions = {
+      request,
+      locationHref: "https://chatgpt.com/c/123",
+      root: document,
+      adapters: [adapter],
+      readSettings: async () => DEFAULT_SETTINGS,
+      showToast: vi.fn(),
+      getUserMessages: () => [first.element, latest.element],
+      questionNavigator
+    };
+
+    await handleRuntimeRequest(commonOptions);
+    await handleRuntimeRequest(commonOptions);
+
+    expect(latest.scrollIntoView).toHaveBeenCalledOnce();
+    expect(first.scrollIntoView).toHaveBeenCalledOnce();
   });
 });
 

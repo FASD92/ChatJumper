@@ -40,6 +40,14 @@ export function jumpToLatestUserMessage(
     };
   }
 
+  return jumpToUserMessage(adapter, target, options);
+}
+
+export function jumpToUserMessage(
+  adapter: ChatAdapter,
+  target: HTMLElement,
+  options: JumpEngineOptions = {}
+): JumpEngineResult {
   target.scrollIntoView({
     behavior: options.smoothScroll === false ? "auto" : "smooth",
     block: "center",

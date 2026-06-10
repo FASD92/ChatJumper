@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { chatGptAdapter } from "../../src/adapters/chatgpt";
+import {
+  chatGptAdapter,
+  findChatGptUserMessages
+} from "../../src/adapters/chatgpt";
 
 describe("chatGptAdapter", () => {
   beforeEach(() => {
@@ -81,6 +84,17 @@ describe("chatGptAdapter", () => {
     makeVisible(dialogCandidate);
 
     expect(chatGptAdapter.findLatestUserMessage(document)).toBe(latestInThread);
+  });
+
+  it("returns usable user messages in document order", () => {
+    const thread = appendThread();
+    const first = appendUserMessage(thread, "first question");
+    const second = appendUserMessage(thread, "second question");
+
+    makeVisible(first);
+    makeVisible(second);
+
+    expect(findChatGptUserMessages(document)).toEqual([first, second]);
   });
 });
 

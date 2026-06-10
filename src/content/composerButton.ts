@@ -1,4 +1,6 @@
 export const CHATJUMPER_COMPOSER_BUTTON_CLASS = "chatjumper-composer-button";
+const BUTTON_GAP_PX = 8;
+const FALLBACK_BUTTON_SIZE_PX = 42;
 
 const CHATGPT_VOICE_BUTTON_SELECTORS = [
   'button[data-testid="composer-speech-button"]',
@@ -34,15 +36,19 @@ export function syncComposerButton(
   const button = existing ?? createComposerButton(options.root);
   button.onclick = options.onClick;
 
-  if (anchor.nextElementSibling !== button) {
-    anchor.after(button);
+  const ownerDocument = getOwnerDocument(options.root);
+
+  if (button.parentElement !== ownerDocument.body) {
+    ownerDocument.body.append(button);
   }
+
+  positionButtonNextToAnchor(button, anchor);
 
   return button;
 }
 
 function createComposerButton(root: Document | HTMLElement): HTMLButtonElement {
-  const ownerDocument = root.ownerDocument ?? document;
+  const ownerDocument = getOwnerDocument(root);
   const button = ownerDocument.createElement("button");
 
   button.type = "button";
@@ -87,4 +93,22 @@ function isInsideComposer(candidate: HTMLButtonElement): boolean {
   return Boolean(
     composer.querySelector("textarea, [contenteditable='true']")
   );
+}
+
+function positionButtonNextToAnchor(
+  button: HTMLButtonElement,
+  anchor: HTMLButtonElement
+): void {
+  const rect = anchor.getBoundingClientRect();
+  const size = Math.round(rect.height) || FALLBACK_BUTTON_SIZE_PX;
+
+  button.style.position = "fixed";
+  button.style.left = `${Math.round(rect.right + BUTTON_GAP_PX)}px`;
+  button.style.top = `${Math.round(rect.top)}px`;
+  button.style.width = `${size}px`;
+  button.style.height = `${size}px`;
+}
+
+function getOwnerDocument(root: Document | HTMLElement): Document {
+  return root instanceof Document ? root : root.ownerDocument;
 }

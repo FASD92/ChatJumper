@@ -1,5 +1,5 @@
 import { findAdapterForUrl, type ChatAdapter } from "../adapters/base";
-import { chatGptAdapter } from "../adapters/chatgpt";
+import { chatGptAdapter, findChatGptUserMessages } from "../adapters/chatgpt";
 import {
   isRuntimeRequest,
   type RuntimeRequest,
@@ -13,7 +13,11 @@ import {
 import { readSettings, type SettingsStorageArea } from "../shared/settingsStorage";
 import { syncComposerButton } from "./composerButton";
 import { ensureContentStyles, showToast as defaultShowToast } from "./feedback";
-import { jumpToLatestUserMessage } from "./jump";
+import { jumpToLatestUserMessage, jumpToUserMessage } from "./jump";
+import {
+  createQuestionNavigator,
+  type QuestionNavigator
+} from "./questionNavigator";
 
 const DEFAULT_ADAPTERS: readonly ChatAdapter[] = [chatGptAdapter];
 const RESYNC_DELAY_MS = 250;
@@ -27,6 +31,8 @@ export interface RunConfiguredJumpOptions {
   root: Document | HTMLElement;
   settings: ChatJumperSettings;
   showToast: (message: string) => void;
+  getUserMessages?: (root: Document | HTMLElement) => HTMLElement[];
+  questionNavigator?: QuestionNavigator;
 }
 
 export interface HandleRuntimeRequestOptions {
@@ -36,6 +42,8 @@ export interface HandleRuntimeRequestOptions {
   adapters?: readonly ChatAdapter[];
   readSettings?: () => Promise<ChatJumperSettings>;
   showToast?: (message: string) => void;
+  getUserMessages?: (root: Document | HTMLElement) => HTMLElement[];
+  questionNavigator?: QuestionNavigator;
 }
 
 export interface BootContentOptions {
@@ -52,12 +60,13 @@ export interface BootContentOptions {
 export function runConfiguredJump(
   options: RunConfiguredJumpOptions
 ): RuntimeResponse {
-  const result = jumpToLatestUserMessage(options.adapter, {
-    root: options.root,
-    smoothScroll: options.settings.smoothScrollEnabled,
-    highlightEnabled: options.settings.highlightEnabled,
-    highlightDurationMs: options.settings.highlightDurationMs
-  });
+  const result =
+    options.getUserMessages && options.questionNavigator
+      ? runNavigatedJump(options)
+      : jumpToLatestUserMessage(options.adapter, {
+          root: options.root,
+          ...createJumpOptions(options.settings)
+        });
 
   if (!result.ok && options.settings.toastFeedbackEnabled) {
     options.showToast("Could not find your latest question.");
@@ -96,7 +105,9 @@ export async function handleRuntimeRequest(
     adapter,
     root: options.root,
     settings,
-    showToast: options.showToast ?? defaultShowToast
+    showToast: options.showToast ?? defaultShowToast,
+    getUserMessages: options.getUserMessages ?? getUserMessagesForAdapter(adapter),
+    questionNavigator: options.questionNavigator
   });
 }
 
@@ -110,6 +121,7 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
   const scheduleTimeout = options.scheduleTimeout ?? window.setTimeout;
   const mutationObserverFactory =
     options.mutationObserverFactory ?? MutationObserver;
+  const questionNavigator = createQuestionNavigator();
   let settings = await readSettingsSafely(storageArea);
   let resyncPending = false;
 
@@ -127,7 +139,8 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
       root,
       adapters,
       readSettings: async () => settings,
-      showToast: defaultShowToast
+      showToast: defaultShowToast,
+      questionNavigator
     })
       .then(sendResponse)
       .catch((error) => {
@@ -186,7 +199,9 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
           adapter,
           root,
           settings,
-          showToast: defaultShowToast
+          showToast: defaultShowToast,
+          getUserMessages: getUserMessagesForAdapter(adapter),
+          questionNavigator
         });
       }
     });
@@ -206,4 +221,37 @@ async function readSettingsSafely(
     console.debug("[ChatJumper] Failed to read settings.", error);
     return createDefaultSettings();
   }
+}
+
+function runNavigatedJump(options: RunConfiguredJumpOptions): RuntimeResponse {
+  const targets = options.getUserMessages?.(options.root) ?? [];
+  const selection = options.questionNavigator?.next(targets) ?? null;
+
+  if (!selection) {
+    return {
+      ok: false,
+      reason: "NOT_FOUND",
+      adapter: options.adapter.id
+    };
+  }
+
+  return jumpToUserMessage(
+    options.adapter,
+    selection.target,
+    createJumpOptions(options.settings)
+  );
+}
+
+function createJumpOptions(settings: ChatJumperSettings) {
+  return {
+    smoothScroll: settings.smoothScrollEnabled,
+    highlightEnabled: settings.highlightEnabled,
+    highlightDurationMs: settings.highlightDurationMs
+  };
+}
+
+function getUserMessagesForAdapter(
+  adapter: ChatAdapter
+): ((root: Document | HTMLElement) => HTMLElement[]) | undefined {
+  return adapter.id === "chatgpt" ? findChatGptUserMessages : undefined;
 }

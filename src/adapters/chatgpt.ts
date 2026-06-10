@@ -23,18 +23,25 @@ export const chatGptAdapter: ChatAdapter = {
   },
 
   findLatestUserMessage(root: Document | HTMLElement): HTMLElement | null {
-    const searchRoot = findConversationRoot(root);
-    const candidates = Array.from(searchRoot.querySelectorAll<HTMLElement>(
-      USER_MESSAGE_SELECTOR
-    ));
-
-    return candidates.reverse().find(isUsableMessageCandidate) ?? null;
+    const messages = findChatGptUserMessages(root);
+    return messages.at(-1) ?? null;
   },
 
   getScrollContainer(): Window {
     return window;
   }
 };
+
+export function findChatGptUserMessages(
+  root: Document | HTMLElement
+): HTMLElement[] {
+  const searchRoot = findConversationRoot(root);
+  const candidates = Array.from(
+    searchRoot.querySelectorAll<HTMLElement>(USER_MESSAGE_SELECTOR)
+  );
+
+  return candidates.filter(isUsableMessageCandidate);
+}
 
 function isUsableMessageCandidate(element: HTMLElement): boolean {
   return (
@@ -56,7 +63,9 @@ function hasVisibleText(element: HTMLElement): boolean {
   return element.textContent?.trim().length ? true : false;
 }
 
-function findConversationRoot(root: Document | HTMLElement): Document | HTMLElement {
+function findConversationRoot(
+  root: Document | HTMLElement
+): Document | HTMLElement {
   for (const selector of THREAD_ROOT_SELECTORS) {
     const candidate = root.querySelector<HTMLElement>(selector);
 

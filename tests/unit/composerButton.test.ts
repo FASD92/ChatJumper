@@ -14,6 +14,11 @@ describe("syncComposerButton", () => {
   it("inserts one J button immediately after the ChatGPT voice button", () => {
     const onClick = vi.fn();
     const voiceButton = createComposerWithVoiceButton();
+    mockButtonRect(voiceButton, {
+      top: 100,
+      right: 220,
+      height: 56
+    });
 
     const button = syncComposerButton({
       root: document,
@@ -28,7 +33,12 @@ describe("syncComposerButton", () => {
     );
     expect(button?.getAttribute("aria-label")).toBe("Jump to latest question");
     expect(button?.getAttribute("title")).toBe("Jump to latest question");
-    expect(voiceButton.nextElementSibling).toBe(button);
+    expect(document.body.lastElementChild).toBe(button);
+    expect(button?.style.position).toBe("fixed");
+    expect(button?.style.left).toBe("228px");
+    expect(button?.style.top).toBe("100px");
+    expect(button?.style.width).toBe("56px");
+    expect(button?.style.height).toBe("56px");
 
     button?.click();
 
@@ -40,6 +50,11 @@ describe("syncComposerButton", () => {
     unrelatedVoiceButton.setAttribute("aria-label", "Voice mode");
     document.body.append(unrelatedVoiceButton);
     const composerVoiceButton = createComposerWithVoiceButton();
+    mockButtonRect(composerVoiceButton, {
+      top: 100,
+      right: 220,
+      height: 56
+    });
 
     const button = syncComposerButton({
       root: document,
@@ -48,7 +63,7 @@ describe("syncComposerButton", () => {
     });
 
     expect(unrelatedVoiceButton.nextElementSibling).not.toBe(button);
-    expect(composerVoiceButton.nextElementSibling).toBe(button);
+    expect(button?.style.left).toBe("228px");
   });
 
   it("reuses an existing button instead of inserting duplicates", () => {
@@ -111,4 +126,16 @@ function createComposerWithVoiceButton(): HTMLButtonElement {
   document.body.append(form);
 
   return voiceButton;
+}
+
+function mockButtonRect(
+  button: HTMLButtonElement,
+  rect: Pick<DOMRect, "top" | "right" | "height">
+): void {
+  button.getBoundingClientRect = () =>
+    ({
+      top: rect.top,
+      right: rect.right,
+      height: rect.height
+    }) as DOMRect;
 }

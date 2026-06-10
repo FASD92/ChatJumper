@@ -21,16 +21,15 @@ export function ensureContentStyles(root: Document = document): void {
   align-items: center;
   background: #6d28d9;
   border: 1px solid rgba(253, 224, 71, 0.75);
-  border-radius: 10px;
+  border-radius: 14px;
+  box-sizing: border-box;
   color: #fde047;
   cursor: pointer;
   display: inline-flex;
   font: 700 15px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  height: 42px;
   justify-content: center;
-  margin-left: 6px;
-  min-width: 42px;
   padding: 0;
+  z-index: 2147483647;
 }
 
 .chatjumper-composer-button:hover {
