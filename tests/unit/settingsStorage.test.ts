@@ -71,6 +71,24 @@ describe("settingsStorage", () => {
       [SETTINGS_STORAGE_KEY]: DEFAULT_SETTINGS
     });
   });
+
+  it("resets with a fresh defaults object", async () => {
+    const storage = createFakeStorage({
+      [SETTINGS_STORAGE_KEY]: {
+        composerButtonEnabled: false
+      }
+    });
+
+    const reset = await resetSettings(storage);
+    const stored = vi.mocked(storage.set).mock.calls[0]?.[0][
+      SETTINGS_STORAGE_KEY
+    ];
+
+    expect(reset).toEqual(DEFAULT_SETTINGS);
+    expect(stored).toEqual(DEFAULT_SETTINGS);
+    expect(reset).not.toBe(DEFAULT_SETTINGS);
+    expect(stored).not.toBe(DEFAULT_SETTINGS);
+  });
 });
 
 function createFakeStorage(

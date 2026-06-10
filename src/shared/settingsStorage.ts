@@ -1,6 +1,6 @@
 import {
-  DEFAULT_SETTINGS,
   SETTINGS_STORAGE_KEY,
+  createDefaultSettings,
   normalizeSettings,
   updateSettings,
   type ChatJumperSettings,
@@ -36,9 +36,11 @@ export async function writeSettings(
 export async function resetSettings(
   storageArea: SettingsStorageArea = chrome.storage.local
 ): Promise<ChatJumperSettings> {
+  const next = createDefaultSettings();
+
   await storageArea.set({
-    [SETTINGS_STORAGE_KEY]: DEFAULT_SETTINGS
+    [SETTINGS_STORAGE_KEY]: next
   });
 
-  return DEFAULT_SETTINGS;
+  return next;
 }

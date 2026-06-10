@@ -26,9 +26,15 @@ export const DEFAULT_SETTINGS: ChatJumperSettings = {
   highlightDurationMs: DEFAULT_HIGHLIGHT_DURATION_MS
 };
 
+export function createDefaultSettings(): ChatJumperSettings {
+  return {
+    ...DEFAULT_SETTINGS
+  };
+}
+
 export function normalizeSettings(value: unknown): ChatJumperSettings {
   if (!isRecord(value)) {
-    return DEFAULT_SETTINGS;
+    return createDefaultSettings();
   }
 
   return {

@@ -30,11 +30,13 @@ function renderPopup(
   settings: ChatJumperSettings,
   storageArea: SettingsStorageArea
 ): void {
+  const status = createStatus();
+
   rootElement.replaceChildren();
   rootElement.append(
     createHeader(),
-    createToggleList(settings, storageArea),
-    createStatus()
+    createToggleList(settings, storageArea, status),
+    status
   );
 }
 
@@ -57,7 +59,8 @@ function createHeader(): HTMLElement {
 
 function createToggleList(
   settings: ChatJumperSettings,
-  storageArea: SettingsStorageArea
+  storageArea: SettingsStorageArea,
+  status: HTMLElement
 ): HTMLElement {
   const list = document.createElement("section");
   list.className = "cj-popup__list";
@@ -69,7 +72,8 @@ function createToggleList(
         row.label,
         row.description,
         row.checked,
-        storageArea
+        storageArea,
+        status
       )
     );
   }
@@ -82,7 +86,8 @@ function createToggleRow(
   labelText: string,
   descriptionText: string,
   checked: boolean,
-  storageArea: SettingsStorageArea
+  storageArea: SettingsStorageArea,
+  status: HTMLElement
 ): HTMLElement {
   const label = document.createElement("label");
   label.className = "cj-toggle";
@@ -102,13 +107,24 @@ function createToggleRow(
   checkbox.className = "cj-toggle__input";
   checkbox.type = "checkbox";
   checkbox.checked = checked;
+  let savedChecked = checked;
   checkbox.addEventListener("change", () => {
-    void writeSettings(
-      {
-        [key]: checkbox.checked
-      },
-      storageArea
-    );
+    void (async () => {
+      try {
+        const next = await writeSettings(
+          {
+            [key]: checkbox.checked
+          },
+          storageArea
+        );
+        savedChecked = next[key];
+        checkbox.checked = savedChecked;
+        status.textContent = "";
+      } catch {
+        checkbox.checked = savedChecked;
+        status.textContent = "Save failed.";
+      }
+    })();
   });
 
   text.append(title, description);

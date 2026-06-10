@@ -4,6 +4,7 @@ import {
   DEFAULT_SETTINGS,
   MAX_HIGHLIGHT_DURATION_MS,
   MIN_HIGHLIGHT_DURATION_MS,
+  createDefaultSettings,
   normalizeSettings,
   updateSettings
 } from "../../src/shared/settings";
@@ -12,6 +13,17 @@ describe("normalizeSettings", () => {
   it("returns launch defaults when storage has no value", () => {
     expect(normalizeSettings(undefined)).toEqual(DEFAULT_SETTINGS);
     expect(normalizeSettings(null)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("returns fresh default objects when storage has no value", () => {
+    const fromUndefined = normalizeSettings(undefined);
+    const fromNull = normalizeSettings(null);
+
+    expect(fromUndefined).toEqual(DEFAULT_SETTINGS);
+    expect(fromNull).toEqual(DEFAULT_SETTINGS);
+    expect(fromUndefined).not.toBe(DEFAULT_SETTINGS);
+    expect(fromNull).not.toBe(DEFAULT_SETTINGS);
+    expect(fromUndefined).not.toBe(fromNull);
   });
 
   it("preserves valid stored values over defaults", () => {
@@ -63,6 +75,19 @@ describe("normalizeSettings", () => {
     expect(
       normalizeSettings({ highlightDurationMs: 1500 }).highlightDurationMs
     ).toBe(1500);
+  });
+});
+
+describe("createDefaultSettings", () => {
+  it("returns a fresh object with launch defaults", () => {
+    const first = createDefaultSettings();
+    const second = createDefaultSettings();
+
+    expect(first).toEqual(DEFAULT_SETTINGS);
+    expect(second).toEqual(DEFAULT_SETTINGS);
+    expect(first).not.toBe(DEFAULT_SETTINGS);
+    expect(second).not.toBe(DEFAULT_SETTINGS);
+    expect(first).not.toBe(second);
   });
 });
 

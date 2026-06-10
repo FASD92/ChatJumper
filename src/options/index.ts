@@ -31,14 +31,16 @@ function renderOptions(
   settings: ChatJumperSettings,
   storageArea: SettingsStorageArea
 ): void {
+  const status = createStatus();
+
   rootElement.replaceChildren();
   rootElement.append(
     createHeader(),
-    createSettingsSection(settings, storageArea),
+    createSettingsSection(settings, storageArea, status),
     createGuidanceSection(),
     createPrivacySection(),
     createSupportSection(),
-    createStatus()
+    status
   );
 }
 
@@ -61,7 +63,8 @@ function createHeader(): HTMLElement {
 
 function createSettingsSection(
   settings: ChatJumperSettings,
-  storageArea: SettingsStorageArea
+  storageArea: SettingsStorageArea,
+  status: HTMLElement
 ): HTMLElement {
   const section = createSection("Settings");
   const list = document.createElement("div");
@@ -74,12 +77,13 @@ function createSettingsSection(
         row.label,
         row.description,
         row.checked,
-        storageArea
+        storageArea,
+        status
       )
     );
   }
 
-  list.append(createDurationControl(settings, storageArea));
+  list.append(createDurationControl(settings, storageArea, status));
   section.append(list);
   return section;
 }
@@ -89,7 +93,8 @@ function createToggleRow(
   labelText: string,
   descriptionText: string,
   checked: boolean,
-  storageArea: SettingsStorageArea
+  storageArea: SettingsStorageArea,
+  status: HTMLElement
 ): HTMLElement {
   const label = document.createElement("label");
   label.className = "cj-setting";
@@ -109,13 +114,24 @@ function createToggleRow(
   checkbox.className = "cj-setting__input";
   checkbox.type = "checkbox";
   checkbox.checked = checked;
+  let savedChecked = checked;
   checkbox.addEventListener("change", () => {
-    void writeSettings(
-      {
-        [key]: checkbox.checked
-      },
-      storageArea
-    );
+    void (async () => {
+      try {
+        const next = await writeSettings(
+          {
+            [key]: checkbox.checked
+          },
+          storageArea
+        );
+        savedChecked = next[key];
+        checkbox.checked = savedChecked;
+        status.textContent = "";
+      } catch {
+        checkbox.checked = savedChecked;
+        status.textContent = "Save failed.";
+      }
+    })();
   });
 
   text.append(title, description);
@@ -125,7 +141,8 @@ function createToggleRow(
 
 function createDurationControl(
   settings: ChatJumperSettings,
-  storageArea: SettingsStorageArea
+  storageArea: SettingsStorageArea,
+  status: HTMLElement
 ): HTMLElement {
   const control = getHighlightDurationControl(settings);
   const wrapper = document.createElement("label");
@@ -149,13 +166,24 @@ function createDurationControl(
   input.max = String(control.max);
   input.step = String(control.step);
   input.value = String(control.value);
+  let savedValue = control.value;
   input.addEventListener("change", () => {
-    void writeSettings(
-      {
-        highlightDurationMs: Number(input.value)
-      },
-      storageArea
-    );
+    void (async () => {
+      try {
+        const next = await writeSettings(
+          {
+            highlightDurationMs: Number(input.value)
+          },
+          storageArea
+        );
+        savedValue = next.highlightDurationMs;
+        input.value = String(savedValue);
+        status.textContent = "";
+      } catch {
+        input.value = String(savedValue);
+        status.textContent = "Save failed.";
+      }
+    })();
   });
 
   text.append(title, description);
