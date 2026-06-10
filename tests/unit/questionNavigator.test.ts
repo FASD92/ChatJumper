@@ -121,6 +121,67 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next(targets)?.target).toBe(third);
   });
 
+  it("keeps walking by cached index when ChatGPT remounts message elements", () => {
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const initialTargets = [
+      createMessageAtCenter(-2600),
+      createMessageAtCenter(-2100),
+      createMessageAtCenter(-1600),
+      createMessageAtCenter(520),
+      createMessageAtCenter(420),
+      createMessageAtCenter(-80)
+    ];
+
+    expect(navigator.next(initialTargets)?.target).toBe(initialTargets[5]);
+
+    const remountedTargets = [
+      createMessageAtCenter(-2600),
+      createMessageAtCenter(-2100),
+      createMessageAtCenter(-1600),
+      createMessageAtCenter(420),
+      createMessageAtCenter(520),
+      createMessageAtCenter(520)
+    ];
+
+    expect(navigator.next(remountedTargets)?.target).toBe(remountedTargets[4]);
+
+    const remountedAgainTargets = [
+      createMessageAtCenter(-2600),
+      createMessageAtCenter(-2100),
+      createMessageAtCenter(420),
+      createMessageAtCenter(420),
+      createMessageAtCenter(520),
+      createMessageAtCenter(620)
+    ];
+
+    expect(navigator.next(remountedAgainTargets)?.target).toBe(
+      remountedAgainTargets[3]
+    );
+  });
+
+  it("resets to latest when the user is back near the bottom of the conversation", () => {
+    let isNearBottom = false;
+    const third = createMessageAtCenter(-1200);
+    const second = createMessageAtCenter(420);
+    const latest = createMessageAtCenter(-80);
+    const navigator = createQuestionNavigator({
+      getIsNearConversationBottom: () => isNearBottom,
+      getViewportHeight: () => 1000
+    });
+
+    expect(navigator.next([third, second, latest])?.target).toBe(latest);
+
+    setMessageCenter(latest, 520);
+
+    expect(navigator.next([third, second, latest])?.target).toBe(second);
+
+    isNearBottom = true;
+
+    expect(navigator.next([third, second, latest])?.target).toBe(latest);
+  });
+
   it("resets to latest when the user scrolls back down near the latest question", () => {
     const second = createMessageAtCenter(420);
     const latest = createMessageAtCenter(-80);

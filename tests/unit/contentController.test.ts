@@ -259,6 +259,44 @@ describe("bootContent", () => {
 
     expect(runtime.listener).toBeTypeOf("function");
   });
+
+  it("resets command navigation to latest after the user returns near the bottom", async () => {
+    const runtime = createRuntime();
+    const storage = createStorage(DEFAULT_SETTINGS);
+    const first = appendChatGptUserMessage("first question");
+    const previous = appendChatGptUserMessage("previous question");
+    const latest = appendChatGptUserMessage("latest question");
+    let isNearBottom = false;
+
+    setTargetTop(first.element, -1200);
+    setTargetTop(previous.element, -200);
+    setTargetTop(latest.element, -80);
+
+    await bootContent({
+      root: document,
+      locationHref: "https://chatgpt.com/c/123",
+      storageArea: storage.local,
+      runtime: runtime as unknown as typeof chrome.runtime,
+      storage: storage as unknown as typeof chrome.storage,
+      mutationObserverFactory: FakeMutationObserver,
+      scheduleTimeout: vi.fn(),
+      getIsNearConversationBottom: () => isNearBottom
+    });
+
+    await sendJumpRequest(runtime);
+
+    setTargetTop(latest.element, 500);
+
+    await sendJumpRequest(runtime);
+
+    isNearBottom = true;
+
+    await sendJumpRequest(runtime);
+
+    expect(latest.scrollIntoView).toHaveBeenCalledTimes(2);
+    expect(previous.scrollIntoView).toHaveBeenCalledOnce();
+    expect(first.scrollIntoView).not.toHaveBeenCalled();
+  });
 });
 
 function createAdapter(target: HTMLElement | null): ChatAdapter {
@@ -309,6 +347,46 @@ function appendComposer(): void {
   voiceButton.setAttribute("aria-label", "Voice mode");
   form.append(textarea, voiceButton);
   document.body.append(form);
+}
+
+function appendChatGptUserMessage(text: string): {
+  element: HTMLElement;
+  scrollIntoView: ReturnType<typeof vi.fn>;
+} {
+  const thread =
+    document.querySelector<HTMLElement>("#thread") ??
+    document.body.appendChild(Object.assign(document.createElement("main"), {
+      id: "thread"
+    }));
+  const element = document.createElement("article");
+  const scrollIntoView = vi.fn();
+
+  element.setAttribute("data-message-author-role", "user");
+  element.textContent = text;
+  element.scrollIntoView = scrollIntoView;
+  element.getClientRects = () => [{ width: 100, height: 100 }] as DOMRectList;
+  thread.append(element);
+
+  return {
+    element,
+    scrollIntoView
+  };
+}
+
+async function sendJumpRequest(
+  runtime: ReturnType<typeof createRuntime>
+): Promise<void> {
+  const sendResponse = vi.fn();
+
+  runtime.listener?.(
+    {
+      type: JUMP_TO_LATEST_USER_MESSAGE,
+      source: "command"
+    },
+    {},
+    sendResponse
+  );
+  await settleAsync();
 }
 
 function createRuntime(): {

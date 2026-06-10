@@ -1,9 +1,11 @@
 export interface UserMessageTargetSelection {
   target: HTMLElement;
   targetCount: number;
+  targetIndex: number;
 }
 
 export interface QuestionNavigatorOptions {
+  getIsNearConversationBottom?: () => boolean;
   getViewportHeight?: () => number;
 }
 
@@ -27,6 +29,11 @@ export function createQuestionNavigator(
 
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
+      if (options.getIsNearConversationBottom?.()) {
+        previousSelection = selectLatestUserMessageTarget(targets);
+        return previousSelection;
+      }
+
       previousSelection = selectNextUserMessageTarget(targets, {
         previousSelection,
         viewportHeight: options.getViewportHeight?.() ?? window.innerHeight
@@ -61,23 +68,36 @@ export function selectNextUserMessageTarget(
   const previousSelection = options.previousSelection ?? null;
 
   if (!previousSelection || previousSelection.targetCount !== targets.length) {
-    return createSelection(viewportTarget, targets.length);
+    return createSelection(viewportTarget, targets);
   }
 
-  const previousIndex = targets.indexOf(previousSelection.target);
   const viewportIndex = targets.indexOf(viewportTarget);
+  const cachedPreviousIndex = previousSelection.targetIndex;
 
   if (
-    previousIndex === -1 ||
     viewportIndex === -1 ||
-    viewportIndex > previousIndex
+    cachedPreviousIndex < 0 ||
+    cachedPreviousIndex >= targets.length ||
+    viewportIndex > cachedPreviousIndex
   ) {
-    return createSelection(viewportTarget, targets.length);
+    return createSelection(viewportTarget, targets);
   }
 
   const target =
-    previousIndex > 0 ? targets[previousIndex - 1] : targets[targets.length - 1];
-  return createSelection(target, targets.length);
+    cachedPreviousIndex > 0
+      ? targets[cachedPreviousIndex - 1]
+      : targets[targets.length - 1];
+  return createSelection(target, targets);
+}
+
+function selectLatestUserMessageTarget(
+  targets: readonly HTMLElement[]
+): UserMessageTargetSelection | null {
+  if (targets.length === 0) {
+    return null;
+  }
+
+  return createSelection(targets[targets.length - 1], targets);
 }
 
 function getVerticalCenter(target: HTMLElement): number {
@@ -88,10 +108,11 @@ function getVerticalCenter(target: HTMLElement): number {
 
 function createSelection(
   target: HTMLElement,
-  targetCount: number
+  targets: readonly HTMLElement[]
 ): UserMessageTargetSelection {
   return {
     target,
-    targetCount
+    targetCount: targets.length,
+    targetIndex: targets.indexOf(target)
   };
 }
