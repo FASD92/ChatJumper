@@ -260,13 +260,13 @@ describe("bootContent", () => {
     expect(runtime.listener).toBeTypeOf("function");
   });
 
-  it("resets command navigation to latest after the user returns near the bottom", async () => {
+  it("keeps command navigation moving to previous questions when the bottom signal stays true", async () => {
     const runtime = createRuntime();
     const storage = createStorage(DEFAULT_SETTINGS);
     const first = appendChatGptUserMessage("first question");
     const previous = appendChatGptUserMessage("previous question");
     const latest = appendChatGptUserMessage("latest question");
-    let isNearBottom = false;
+    const isNearBottom = true;
 
     setTargetTop(first.element, -1200);
     setTargetTop(previous.element, -200);
@@ -289,7 +289,45 @@ describe("bootContent", () => {
 
     await sendJumpRequest(runtime);
 
-    isNearBottom = true;
+    setTargetTop(previous.element, 500);
+    setTargetTop(first.element, 420);
+
+    await sendJumpRequest(runtime);
+
+    expect(latest.scrollIntoView).toHaveBeenCalledOnce();
+    expect(previous.scrollIntoView).toHaveBeenCalledOnce();
+    expect(first.scrollIntoView).toHaveBeenCalledOnce();
+  });
+
+  it("resets command navigation to the current viewport after a user scroll gesture", async () => {
+    const runtime = createRuntime();
+    const storage = createStorage(DEFAULT_SETTINGS);
+    const first = appendChatGptUserMessage("first question");
+    const previous = appendChatGptUserMessage("previous question");
+    const latest = appendChatGptUserMessage("latest question");
+
+    setTargetTop(first.element, -1200);
+    setTargetTop(previous.element, 420);
+    setTargetTop(latest.element, -80);
+
+    await bootContent({
+      root: document,
+      locationHref: "https://chatgpt.com/c/123",
+      storageArea: storage.local,
+      runtime: runtime as unknown as typeof chrome.runtime,
+      storage: storage as unknown as typeof chrome.storage,
+      mutationObserverFactory: FakeMutationObserver,
+      scheduleTimeout: vi.fn()
+    });
+
+    await sendJumpRequest(runtime);
+
+    setTargetTop(latest.element, 500);
+
+    await sendJumpRequest(runtime);
+
+    setTargetTop(latest.element, -80);
+    document.dispatchEvent(new WheelEvent("wheel", { deltaY: 200 }));
 
     await sendJumpRequest(runtime);
 

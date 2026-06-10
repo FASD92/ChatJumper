@@ -29,7 +29,7 @@ export function createQuestionNavigator(
 
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
-      if (options.getIsNearConversationBottom?.()) {
+      if (!previousSelection && options.getIsNearConversationBottom?.()) {
         previousSelection = selectLatestUserMessageTarget(targets);
         return previousSelection;
       }
@@ -71,14 +71,11 @@ export function selectNextUserMessageTarget(
     return createSelection(viewportTarget, targets);
   }
 
-  const viewportIndex = targets.indexOf(viewportTarget);
   const cachedPreviousIndex = previousSelection.targetIndex;
 
   if (
-    viewportIndex === -1 ||
     cachedPreviousIndex < 0 ||
-    cachedPreviousIndex >= targets.length ||
-    viewportIndex > cachedPreviousIndex
+    cachedPreviousIndex >= targets.length
   ) {
     return createSelection(viewportTarget, targets);
   }

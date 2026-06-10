@@ -58,7 +58,7 @@ describe("selectNextUserMessageTarget", () => {
     expect(selection?.target).toBe(latest);
   });
 
-  it("uses the current viewport on every navigator call", () => {
+  it("uses the current viewport after the navigation sequence is reset", () => {
     const first = createMessageAtCenter(-1200);
     const previous = createMessageAtCenter(420);
     const latest = createMessageAtCenter(520);
@@ -69,6 +69,7 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next([first, previous, latest])?.target).toBe(previous);
 
     setMessageCenter(latest, -80);
+    navigator.reset();
 
     expect(navigator.next([first, previous, latest])?.target).toBe(latest);
   });
@@ -121,6 +122,20 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next(targets)?.target).toBe(third);
   });
 
+  it("keeps walking by cached index when the viewport still points at a newer question", () => {
+    const first = createMessageAtCenter(620);
+    const second = createMessageAtCenter(620);
+    const latest = createMessageAtCenter(620);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const targets = [first, second, latest];
+
+    expect(navigator.next(targets)?.target).toBe(latest);
+    expect(navigator.next(targets)?.target).toBe(second);
+    expect(navigator.next(targets)?.target).toBe(first);
+  });
+
   it("keeps walking by cached index when ChatGPT remounts message elements", () => {
     const navigator = createQuestionNavigator({
       getViewportHeight: () => 1000
@@ -161,8 +176,8 @@ describe("selectNextUserMessageTarget", () => {
     );
   });
 
-  it("resets to latest when the user is back near the bottom of the conversation", () => {
-    let isNearBottom = false;
+  it("does not let a persistent bottom signal trap navigation on the latest question", () => {
+    const isNearBottom = true;
     const third = createMessageAtCenter(-1200);
     const second = createMessageAtCenter(420);
     const latest = createMessageAtCenter(-80);
@@ -177,9 +192,10 @@ describe("selectNextUserMessageTarget", () => {
 
     expect(navigator.next([third, second, latest])?.target).toBe(second);
 
-    isNearBottom = true;
+    setMessageCenter(second, 520);
+    setMessageCenter(third, 420);
 
-    expect(navigator.next([third, second, latest])?.target).toBe(latest);
+    expect(navigator.next([third, second, latest])?.target).toBe(third);
   });
 
   it("resets to latest when the user scrolls back down near the latest question", () => {
@@ -197,6 +213,7 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next(targets)?.target).toBe(second);
 
     setMessageCenter(latest, -80);
+    navigator.reset();
 
     expect(navigator.next(targets)?.target).toBe(latest);
   });
