@@ -8,8 +8,10 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Jump to latest question"
+    "default_title": "ChatJumper settings",
+    "default_popup": "popup.html"
   },
+  "options_page": "options.html",
   "permissions": ["storage"],
   "content_scripts": [
     {
@@ -28,4 +30,3 @@
     }
   }
 }
-
