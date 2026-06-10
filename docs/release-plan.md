@@ -47,12 +47,12 @@ ChatGPT composer 오른쪽, Voice 버튼 근처에 삽입되는 점프 버튼이
 - 삽입 실패 시 페이지 toast는 띄우지 않는다.
 - 삽입 실패 상태는 Popup 또는 Options Page에서만 보여준다.
 - `aria-label`과 tooltip은 `Jump to latest question`으로 둔다.
-- 첫 실행은 최신 사용자 질문으로 이동하고, 같은 대화에서 연속 실행하면 이전 사용자 질문으로 순서대로 이동한다. 새 사용자 질문이 추가되면 다시 최신 질문부터 시작한다.
+- 첫 실행은 최신 사용자 질문으로 이동한다. 이후 실행은 내부 카운터가 아니라 현재 브라우저 viewport 위치를 기준으로 바로 위의 사용자 질문을 찾는다. 사용자가 다시 아래로 스크롤하면 다시 현재 위치 기준으로 최신 질문을 선택한다.
 
 ### Keyboard Shortcut
 
 단축키는 빠른 점프 실행 경로로 유지한다. 기본값은 manifest의 command 설정을 따른다.
-Composer Button과 같은 이동 규칙을 사용하며, 연속 실행 시 이전 사용자 질문으로 이동한다.
+Composer Button과 같은 이동 규칙을 사용하며, 현재 viewport 기준으로 이전 사용자 질문으로 이동한다.
 
 ## Options Page
 

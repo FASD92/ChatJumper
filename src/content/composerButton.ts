@@ -36,14 +36,11 @@ export function syncComposerButton(
   const button = existing ?? createComposerButton(options.root);
   button.onclick = options.onClick;
 
-  const ownerDocument = getOwnerDocument(options.root);
-
-  if (button.parentElement !== ownerDocument.body) {
-    ownerDocument.body.append(button);
+  if (anchor.nextElementSibling !== button) {
+    anchor.after(button);
   }
 
-  positionButtonNextToAnchor(button, anchor);
-
+  sizeButtonLikeAnchor(button, anchor);
   return button;
 }
 
@@ -95,16 +92,17 @@ function isInsideComposer(candidate: HTMLButtonElement): boolean {
   );
 }
 
-function positionButtonNextToAnchor(
+function sizeButtonLikeAnchor(
   button: HTMLButtonElement,
   anchor: HTMLButtonElement
 ): void {
   const rect = anchor.getBoundingClientRect();
   const size = Math.round(rect.height) || FALLBACK_BUTTON_SIZE_PX;
 
-  button.style.position = "fixed";
-  button.style.left = `${Math.round(rect.right + BUTTON_GAP_PX)}px`;
-  button.style.top = `${Math.round(rect.top)}px`;
+  button.style.position = "";
+  button.style.left = "";
+  button.style.top = "";
+  button.style.marginLeft = `${BUTTON_GAP_PX}px`;
   button.style.width = `${size}px`;
   button.style.height = `${size}px`;
 }

@@ -33,10 +33,10 @@ describe("syncComposerButton", () => {
     );
     expect(button?.getAttribute("aria-label")).toBe("Jump to latest question");
     expect(button?.getAttribute("title")).toBe("Jump to latest question");
-    expect(document.body.lastElementChild).toBe(button);
-    expect(button?.style.position).toBe("fixed");
-    expect(button?.style.left).toBe("228px");
-    expect(button?.style.top).toBe("100px");
+    expect(button?.parentElement).toBe(voiceButton.parentElement);
+    expect(voiceButton.nextElementSibling).toBe(button);
+    expect(button?.style.position).toBe("");
+    expect(button?.style.marginLeft).toBe("8px");
     expect(button?.style.width).toBe("56px");
     expect(button?.style.height).toBe("56px");
 
@@ -63,7 +63,8 @@ describe("syncComposerButton", () => {
     });
 
     expect(unrelatedVoiceButton.nextElementSibling).not.toBe(button);
-    expect(button?.style.left).toBe("228px");
+    expect(composerVoiceButton.nextElementSibling).toBe(button);
+    expect(button?.style.marginLeft).toBe("8px");
   });
 
   it("reuses an existing button instead of inserting duplicates", () => {

@@ -3,48 +3,54 @@ export interface UserMessageTargetSelection {
   targetCount: number;
 }
 
+export interface QuestionNavigatorOptions {
+  getViewportHeight?: () => number;
+}
+
+export interface SelectNextUserMessageTargetOptions {
+  viewportHeight?: number;
+}
+
 export interface QuestionNavigator {
   next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null;
   reset(): void;
 }
 
-export function createQuestionNavigator(): QuestionNavigator {
-  let previousSelection: UserMessageTargetSelection | null = null;
+const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.35;
 
+export function createQuestionNavigator(
+  options: QuestionNavigatorOptions = {}
+): QuestionNavigator {
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
-      previousSelection = selectNextUserMessageTarget(
-        targets,
-        previousSelection
-      );
-      return previousSelection;
+      return selectNextUserMessageTarget(targets, {
+        viewportHeight: options.getViewportHeight?.() ?? window.innerHeight
+      });
     },
 
     reset(): void {
-      previousSelection = null;
+      return;
     }
   };
 }
 
 export function selectNextUserMessageTarget(
   targets: readonly HTMLElement[],
-  previousSelection: UserMessageTargetSelection | null
+  options: SelectNextUserMessageTargetOptions = {}
 ): UserMessageTargetSelection | null {
   if (targets.length === 0) {
     return null;
   }
 
-  if (!previousSelection || previousSelection.targetCount !== targets.length) {
-    return createSelection(targets[targets.length - 1], targets.length);
-  }
+  const viewportHeight = options.viewportHeight ?? window.innerHeight;
+  const thresholdTop = viewportHeight * DEFAULT_VIEWPORT_THRESHOLD_RATIO;
+  const candidatesAboveThreshold = targets.filter(
+    (target) => target.getBoundingClientRect().top < thresholdTop
+  );
+  const target =
+    candidatesAboveThreshold.at(-1) ?? targets[targets.length - 1];
 
-  const previousIndex = targets.indexOf(previousSelection.target);
-
-  if (previousIndex <= 0) {
-    return createSelection(targets[targets.length - 1], targets.length);
-  }
-
-  return createSelection(targets[previousIndex - 1], targets.length);
+  return createSelection(target, targets.length);
 }
 
 function createSelection(

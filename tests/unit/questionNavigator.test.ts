@@ -7,42 +7,67 @@ import {
 } from "../../src/content/questionNavigator";
 
 describe("selectNextUserMessageTarget", () => {
-  it("starts at the latest message and then moves backward", () => {
-    const first = document.createElement("article");
-    const second = document.createElement("article");
-    const latest = document.createElement("article");
+  it("selects the latest message above the current viewport threshold", () => {
+    const first = createMessageAtTop(-1600);
+    const second = createMessageAtTop(-900);
+    const latest = createMessageAtTop(-80);
     const targets = [first, second, latest];
 
-    const firstSelection = selectNextUserMessageTarget(targets, null);
-    const secondSelection = selectNextUserMessageTarget(targets, firstSelection);
-    const thirdSelection = selectNextUserMessageTarget(targets, secondSelection);
+    const selection = selectNextUserMessageTarget(targets, {
+      viewportHeight: 1000
+    });
 
-    expect(firstSelection?.target).toBe(latest);
-    expect(secondSelection?.target).toBe(second);
-    expect(thirdSelection?.target).toBe(first);
+    expect(selection?.target).toBe(latest);
   });
 
-  it("resets to latest when the message list changes", () => {
-    const first = document.createElement("article");
-    const latest = document.createElement("article");
-    const newer = document.createElement("article");
-    const firstSelection = selectNextUserMessageTarget([first, latest], null);
+  it("selects the previous message after the latest message is centered", () => {
+    const first = createMessageAtTop(-1200);
+    const previous = createMessageAtTop(-200);
+    const latest = createMessageAtTop(500);
 
-    const nextSelection = selectNextUserMessageTarget(
-      [first, latest, newer],
-      firstSelection
-    );
+    const selection = selectNextUserMessageTarget([first, previous, latest], {
+      viewportHeight: 1000
+    });
 
-    expect(nextSelection?.target).toBe(newer);
+    expect(selection?.target).toBe(previous);
   });
 
-  it("cycles back to latest after the oldest message", () => {
-    const first = document.createElement("article");
-    const latest = document.createElement("article");
-    const navigator = createQuestionNavigator();
+  it("falls back to the latest message when no message is above the threshold", () => {
+    const first = createMessageAtTop(600);
+    const latest = createMessageAtTop(900);
 
-    expect(navigator.next([first, latest])?.target).toBe(latest);
-    expect(navigator.next([first, latest])?.target).toBe(first);
-    expect(navigator.next([first, latest])?.target).toBe(latest);
+    const selection = selectNextUserMessageTarget([first, latest], {
+      viewportHeight: 1000
+    });
+
+    expect(selection?.target).toBe(latest);
+  });
+
+  it("uses the current viewport on every navigator call", () => {
+    const first = createMessageAtTop(-1200);
+    const previous = createMessageAtTop(-200);
+    const latest = createMessageAtTop(500);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+
+    expect(navigator.next([first, previous, latest])?.target).toBe(previous);
+
+    setMessageTop(latest, -80);
+
+    expect(navigator.next([first, previous, latest])?.target).toBe(latest);
   });
 });
+
+function createMessageAtTop(top: number): HTMLElement {
+  const element = document.createElement("article");
+  setMessageTop(element, top);
+  return element;
+}
+
+function setMessageTop(element: HTMLElement, top: number): void {
+  element.getBoundingClientRect = () =>
+    ({
+      top
+    }) as DOMRect;
+}

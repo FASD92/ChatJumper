@@ -157,9 +157,12 @@ describe("handleRuntimeRequest", () => {
 
   it("moves to previous questions on repeated command requests", async () => {
     const first = createTarget();
+    const previous = createTarget();
     const latest = createTarget();
     const adapter = createAdapter(latest.element);
-    const questionNavigator = createQuestionNavigator();
+    const questionNavigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
     const request = {
       type: JUMP_TO_LATEST_USER_MESSAGE,
       source: "command" as const
@@ -171,15 +174,20 @@ describe("handleRuntimeRequest", () => {
       adapters: [adapter],
       readSettings: async () => DEFAULT_SETTINGS,
       showToast: vi.fn(),
-      getUserMessages: () => [first.element, latest.element],
+      getUserMessages: () => [first.element, previous.element, latest.element],
       questionNavigator
     };
 
+    setTargetTop(first.element, -1200);
+    setTargetTop(previous.element, -200);
+    setTargetTop(latest.element, -80);
     await handleRuntimeRequest(commonOptions);
+    setTargetTop(latest.element, 500);
     await handleRuntimeRequest(commonOptions);
 
     expect(latest.scrollIntoView).toHaveBeenCalledOnce();
-    expect(first.scrollIntoView).toHaveBeenCalledOnce();
+    expect(previous.scrollIntoView).toHaveBeenCalledOnce();
+    expect(first.scrollIntoView).not.toHaveBeenCalled();
   });
 });
 
@@ -279,6 +287,13 @@ function createTarget(): {
     scrollIntoView,
     addClass
   };
+}
+
+function setTargetTop(element: HTMLElement, top: number): void {
+  element.getBoundingClientRect = () =>
+    ({
+      top
+    }) as DOMRect;
 }
 
 function appendComposer(): void {
