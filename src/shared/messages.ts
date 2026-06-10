@@ -1,3 +1,5 @@
+import type { ChatAdapterId } from "./sites";
+
 export const JUMP_TO_LATEST_USER_MESSAGE =
   "chatjumper.jumpToLatestUserMessage" as const;
 
@@ -11,11 +13,13 @@ export interface JumpToLatestUserMessageRequest {
 export type JumpToLatestUserMessageResponse =
   | {
       ok: true;
-      status: "ACKNOWLEDGED";
+      status: "JUMPED";
+      adapter: ChatAdapterId;
     }
   | {
       ok: false;
-      reason: "UNSUPPORTED_PAGE" | "JUMP_ENGINE_NOT_READY";
+      reason: "UNSUPPORTED_PAGE" | "ADAPTER_NOT_FOUND" | "NOT_FOUND";
+      adapter?: ChatAdapterId;
     };
 
 export type RuntimeRequest = JumpToLatestUserMessageRequest;
@@ -35,4 +39,3 @@ export function isRuntimeRequest(message: unknown): message is RuntimeRequest {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
-

@@ -1,8 +1,12 @@
+import { findAdapterForUrl, type ChatAdapter } from "../adapters/base";
 import {
   isRuntimeRequest,
   type RuntimeRequest,
   type RuntimeResponse
 } from "../shared/messages";
+import { jumpToLatestUserMessage } from "./jump";
+
+const adapters: readonly ChatAdapter[] = [];
 
 chrome.runtime.onMessage.addListener(
   (
@@ -14,27 +18,26 @@ chrome.runtime.onMessage.addListener(
       return false;
     }
 
-    sendResponse(handleRuntimeRequest(message, window.location));
+    sendResponse(handleRuntimeRequest(message, window.location, document));
     return false;
   }
 );
 
 function handleRuntimeRequest(
   request: RuntimeRequest,
-  location: Location
+  location: Location,
+  root: Document | HTMLElement
 ): RuntimeResponse {
-  if (location.hostname !== "chatgpt.com") {
+  const adapter = findAdapterForUrl(adapters, new URL(location.href));
+
+  if (!adapter) {
     return {
       ok: false,
-      reason: "UNSUPPORTED_PAGE"
+      reason: "ADAPTER_NOT_FOUND"
     };
   }
 
   console.debug("[ChatJumper] Jump request acknowledged.", request.source);
 
-  return {
-    ok: false,
-    reason: "JUMP_ENGINE_NOT_READY"
-  };
+  return jumpToLatestUserMessage(adapter, { root });
 }
-
