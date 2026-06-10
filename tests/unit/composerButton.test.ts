@@ -11,19 +11,9 @@ describe("syncComposerButton", () => {
     document.body.replaceChildren();
   });
 
-  it("inserts one J button immediately after the ChatGPT voice button", () => {
+  it("renders a floating J button without touching composer controls", () => {
     const onClick = vi.fn();
     const { form, voiceButton } = createComposerWithVoiceButton();
-    mockFormRect(form, {
-      left: 20,
-      top: 80,
-      width: 420
-    });
-    mockButtonRect(voiceButton, {
-      top: 100,
-      right: 220,
-      height: 56
-    });
 
     const button = syncComposerButton({
       root: document,
@@ -38,14 +28,14 @@ describe("syncComposerButton", () => {
     );
     expect(button?.getAttribute("aria-label")).toBe("Jump to latest question");
     expect(button?.getAttribute("title")).toBe("Jump to latest question");
-    expect(button?.parentElement).toBe(form);
-    expect(form.style.position).toBe("relative");
-    expect(button?.style.position).toBe("absolute");
-    expect(button?.style.left).toBe("208px");
-    expect(button?.style.top).toBe("20px");
-    expect(button?.style.marginLeft).toBe("");
-    expect(button?.style.width).toBe("56px");
-    expect(button?.style.height).toBe("56px");
+    expect(button?.parentElement).toBe(document.body);
+    expect(form.contains(button)).toBe(false);
+    expect(voiceButton.nextElementSibling).toBeNull();
+    expect(button?.style.position).toBe("fixed");
+    expect(button?.style.right).toBe("24px");
+    expect(button?.style.bottom).toBe("112px");
+    expect(button?.style.width).toBe("52px");
+    expect(button?.style.height).toBe("52px");
 
     button?.click();
 
@@ -57,16 +47,6 @@ describe("syncComposerButton", () => {
     unrelatedVoiceButton.setAttribute("aria-label", "Voice mode");
     document.body.append(unrelatedVoiceButton);
     const { form, voiceButton } = createComposerWithVoiceButton();
-    mockFormRect(form, {
-      left: 20,
-      top: 80,
-      width: 420
-    });
-    mockButtonRect(voiceButton, {
-      top: 100,
-      right: 220,
-      height: 56
-    });
 
     const button = syncComposerButton({
       root: document,
@@ -75,8 +55,8 @@ describe("syncComposerButton", () => {
     });
 
     expect(unrelatedVoiceButton.nextElementSibling).not.toBe(button);
-    expect(button?.parentElement).toBe(form);
-    expect(button?.style.left).toBe("208px");
+    expect(form.contains(button)).toBe(false);
+    expect(voiceButton.nextElementSibling).toBeNull();
   });
 
   it("reuses an existing button instead of inserting duplicates", () => {
@@ -117,14 +97,15 @@ describe("syncComposerButton", () => {
       .toBeNull();
   });
 
-  it("does not insert a button when no composer voice button exists", () => {
+  it("renders a floating button even when no composer voice button exists", () => {
     const button = syncComposerButton({
       root: document,
       enabled: true,
       onClick: vi.fn()
     });
 
-    expect(button).toBeNull();
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    expect(button?.parentElement).toBe(document.body);
   });
 });
 
@@ -145,28 +126,4 @@ function createComposerWithVoiceButton(): {
     form,
     voiceButton
   };
-}
-
-function mockButtonRect(
-  button: HTMLButtonElement,
-  rect: Pick<DOMRect, "top" | "right" | "height">
-): void {
-  button.getBoundingClientRect = () =>
-    ({
-      top: rect.top,
-      right: rect.right,
-      height: rect.height
-    }) as DOMRect;
-}
-
-function mockFormRect(
-  form: HTMLFormElement,
-  rect: Pick<DOMRect, "left" | "top" | "width">
-): void {
-  form.getBoundingClientRect = () =>
-    ({
-      left: rect.left,
-      top: rect.top,
-      width: rect.width
-    }) as DOMRect;
 }

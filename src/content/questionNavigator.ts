@@ -8,6 +8,7 @@ export interface QuestionNavigatorOptions {
 }
 
 export interface SelectNextUserMessageTargetOptions {
+  previousSelection?: UserMessageTargetSelection | null;
   viewportHeight?: number;
 }
 
@@ -22,15 +23,20 @@ const CURRENT_TARGET_EXCLUSION_PX = 24;
 export function createQuestionNavigator(
   options: QuestionNavigatorOptions = {}
 ): QuestionNavigator {
+  let previousSelection: UserMessageTargetSelection | null = null;
+
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
-      return selectNextUserMessageTarget(targets, {
+      previousSelection = selectNextUserMessageTarget(targets, {
+        previousSelection,
         viewportHeight: options.getViewportHeight?.() ?? window.innerHeight
       });
+
+      return previousSelection;
     },
 
     reset(): void {
-      return;
+      previousSelection = null;
     }
   };
 }
@@ -50,9 +56,27 @@ export function selectNextUserMessageTarget(
   const candidatesAboveThreshold = targets.filter(
     (target) => getVerticalCenter(target) < thresholdCenter
   );
-  const target =
+  const viewportTarget =
     candidatesAboveThreshold.at(-1) ?? targets[targets.length - 1];
+  const previousSelection = options.previousSelection ?? null;
 
+  if (!previousSelection || previousSelection.targetCount !== targets.length) {
+    return createSelection(viewportTarget, targets.length);
+  }
+
+  const previousIndex = targets.indexOf(previousSelection.target);
+  const viewportIndex = targets.indexOf(viewportTarget);
+
+  if (
+    previousIndex === -1 ||
+    viewportIndex === -1 ||
+    viewportIndex > previousIndex
+  ) {
+    return createSelection(viewportTarget, targets.length);
+  }
+
+  const target =
+    previousIndex > 0 ? targets[previousIndex - 1] : targets[targets.length - 1];
   return createSelection(target, targets.length);
 }
 
