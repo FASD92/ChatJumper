@@ -23,8 +23,12 @@ describe("content feedback", () => {
     );
 
     expect(styles).toHaveLength(1);
-    expect(styles[0].textContent).toContain("background: #6d28d9");
-    expect(styles[0].textContent).toContain("color: #fde047");
+    expect(styles[0].textContent).toContain("linear-gradient(145deg");
+    expect(styles[0].textContent).toContain("border: 2px solid #f8c43a");
+    expect(styles[0].textContent).toContain("font: 800 25px/1");
+    expect(styles[0].textContent).toContain(
+      ".chatjumper-composer-button::after"
+    );
   });
 
   it("shows one toast and removes it after the delay", () => {
