@@ -8,7 +8,8 @@
     "dev": "vite build --watch --mode development",
     "build": "vite build",
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "release:zip": "node scripts/releasePackage.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.306",

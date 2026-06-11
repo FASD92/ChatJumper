@@ -7,3 +7,4 @@ test-results/
 .worktrees/
 docs/*.local.md
 site/assets/raw/
+artifacts/
