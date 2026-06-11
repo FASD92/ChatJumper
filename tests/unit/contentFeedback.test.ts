@@ -23,10 +23,13 @@ describe("content feedback", () => {
     );
 
     expect(styles).toHaveLength(1);
-    expect(styles[0].textContent).toContain("linear-gradient(145deg");
-    expect(styles[0].textContent).toContain("border: 2px solid #f8c43a");
-    expect(styles[0].textContent).toContain("font: 800 25px/1");
     expect(styles[0].textContent).toContain(
+      "background-image: var(--chatjumper-composer-icon-url)"
+    );
+    expect(styles[0].textContent).toContain("background-size: contain");
+    expect(styles[0].textContent).toContain("color: transparent");
+    expect(styles[0].textContent).not.toContain("linear-gradient(145deg");
+    expect(styles[0].textContent).not.toContain(
       ".chatjumper-composer-button::after"
     );
   });

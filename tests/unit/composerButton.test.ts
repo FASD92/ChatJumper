@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CHATJUMPER_COMPOSER_BUTTON_CLASS,
   syncComposerButton
@@ -11,9 +11,20 @@ describe("syncComposerButton", () => {
     document.body.replaceChildren();
   });
 
-  it("renders a floating J button without touching composer controls", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("renders a floating icon button without touching composer controls", () => {
     const onClick = vi.fn();
+    const getURL = vi.fn((path: string) => `chrome-extension://test/${path}`);
     const { form, voiceButton } = createComposerWithVoiceButton();
+
+    vi.stubGlobal("chrome", {
+      runtime: {
+        getURL
+      }
+    });
 
     const button = syncComposerButton({
       root: document,
@@ -36,6 +47,10 @@ describe("syncComposerButton", () => {
     expect(button?.style.bottom).toBe("112px");
     expect(button?.style.width).toBe("52px");
     expect(button?.style.height).toBe("52px");
+    expect(getURL).toHaveBeenCalledWith("icons/icon-128.png");
+    expect(
+      button?.style.getPropertyValue("--chatjumper-composer-icon-url")
+    ).toBe('url("chrome-extension://test/icons/icon-128.png")');
 
     button?.click();
 

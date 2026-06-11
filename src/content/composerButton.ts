@@ -1,4 +1,7 @@
 export const CHATJUMPER_COMPOSER_BUTTON_CLASS = "chatjumper-composer-button";
+const CHATJUMPER_COMPOSER_ICON_PATH = "icons/icon-128.png";
+const CHATJUMPER_COMPOSER_ICON_STYLE_VAR =
+  "--chatjumper-composer-icon-url";
 
 export interface SyncComposerButtonOptions {
   root: Document | HTMLElement;
@@ -18,6 +21,7 @@ export function syncComposerButton(
 
   const button = existing ?? createComposerButton(options.root);
   button.onclick = options.onClick;
+  syncComposerButtonIcon(button);
   const ownerDocument = getOwnerDocument(options.root);
 
   if (button.parentElement !== ownerDocument.body) {
@@ -58,6 +62,28 @@ function positionFloatingButton(button: HTMLButtonElement): void {
   button.style.marginLeft = "";
   button.style.width = "52px";
   button.style.height = "52px";
+}
+
+function syncComposerButtonIcon(button: HTMLButtonElement): void {
+  const iconUrl = getComposerIconUrl();
+
+  if (!iconUrl) {
+    button.style.removeProperty(CHATJUMPER_COMPOSER_ICON_STYLE_VAR);
+    return;
+  }
+
+  button.style.setProperty(
+    CHATJUMPER_COMPOSER_ICON_STYLE_VAR,
+    `url("${iconUrl}")`
+  );
+}
+
+function getComposerIconUrl(): string | null {
+  if (typeof chrome === "undefined" || !chrome.runtime?.getURL) {
+    return null;
+  }
+
+  return chrome.runtime.getURL(CHATJUMPER_COMPOSER_ICON_PATH);
 }
 
 function getOwnerDocument(root: Document | HTMLElement): Document {
