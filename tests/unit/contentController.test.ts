@@ -177,6 +177,7 @@ describe("handleRuntimeRequest", () => {
       questionNavigator
     };
 
+    document.body.append(first.element, previous.element, latest.element);
     setTargetTop(first.element, -1200);
     setTargetTop(previous.element, -200);
     setTargetTop(latest.element, -80);

@@ -38,6 +38,7 @@ export function createQuestionNavigator(
   const getTargetKey = options.getTargetKey ?? getStableTargetKey;
   let cachedTargets: readonly CachedTarget[] = [];
   let previousSelection: UserMessageTargetSelection | null = null;
+  let useViewportForNextInitialSelection = false;
 
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
@@ -55,16 +56,20 @@ export function createQuestionNavigator(
         }
       }
 
-      previousSelection = selectNextUserMessageTarget(targets, {
-        viewportHeight: options.getViewportHeight?.() ?? window.innerHeight,
-        getTargetKey
-      });
+      previousSelection = useViewportForNextInitialSelection
+        ? selectNextUserMessageTarget(targets, {
+            viewportHeight: options.getViewportHeight?.() ?? window.innerHeight,
+            getTargetKey
+          })
+        : selectLatestUserMessageTarget(targets, getTargetKey);
+      useViewportForNextInitialSelection = false;
 
       return previousSelection;
     },
 
     reset(): void {
       previousSelection = null;
+      useViewportForNextInitialSelection = true;
     }
   };
 }
@@ -88,6 +93,19 @@ export function selectNextUserMessageTarget(
     viewportTarget,
     (options.getTargetKey ?? getStableTargetKey)(viewportTarget)
   );
+}
+
+function selectLatestUserMessageTarget(
+  targets: readonly HTMLElement[],
+  getTargetKey: (target: HTMLElement) => string | null
+): UserMessageTargetSelection | null {
+  if (targets.length === 0) {
+    return null;
+  }
+
+  const latestTarget = targets[targets.length - 1];
+
+  return createSelection(latestTarget, getTargetKey(latestTarget));
 }
 
 function getVerticalBottom(target: HTMLElement): number {

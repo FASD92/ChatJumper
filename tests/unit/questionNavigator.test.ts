@@ -50,6 +50,8 @@ describe("selectNextUserMessageTarget", () => {
       getViewportHeight: () => 1000
     });
 
+    document.body.append(third, second, latest);
+
     expect(navigator.next([third, second, latest])?.target).toBe(latest);
 
     setMessageBounds(latest, 360, 680);
@@ -61,6 +63,30 @@ describe("selectNextUserMessageTarget", () => {
     setMessageBounds(third, -160, 80);
 
     expect(navigator.next([third, second, latest])?.target).toBe(third);
+  });
+
+  it("starts a fresh click sequence at the latest question after page load", () => {
+    const oldest = createMessageWithBounds(-95, 1);
+    const second = createMessageWithBounds(79, 211);
+    const latest = createMessageWithBounds(709, 841);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+
+    expect(navigator.next([oldest, second, latest])?.target).toBe(latest);
+  });
+
+  it("uses the current viewport after manual navigation resets the fresh sequence", () => {
+    const oldest = createMessageWithBounds(-95, 1);
+    const second = createMessageWithBounds(79, 211);
+    const latest = createMessageWithBounds(709, 841);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+
+    navigator.reset();
+
+    expect(navigator.next([oldest, second, latest])?.target).toBe(oldest);
   });
 
   it("continues the cached click sequence when the current DOM list skips intermediate questions", () => {
@@ -202,14 +228,14 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next([previous, latest])?.target).toBe(previous);
   });
 
-  it("uses the current viewport after a small wheel movement between the latest and previous question", () => {
+  it("starts at the latest question for a fresh sequence even when another question has passed the reference line", () => {
     const previous = createMessageWithBounds(-160, 80);
     const latest = createMessageWithBounds(100, 300);
     const navigator = createQuestionNavigator({
       getViewportHeight: () => 1000
     });
 
-    expect(navigator.next([previous, latest])?.target).toBe(previous);
+    expect(navigator.next([previous, latest])?.target).toBe(latest);
   });
 
   it("uses a smaller reference line on short viewports", () => {
