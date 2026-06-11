@@ -16,9 +16,25 @@ _Avoid_: AI Chat Jump
 ChatJumper의 기능, 개인정보 처리, 지원 방법을 설명하는 공개 웹페이지.
 _Avoid_: 설명 페이지, landing page, marketing site
 
+**Product Site Host**:
+Product Site를 공개하는 정적 호스팅 위치. 첫 출시에서는 같은 GitHub repository의 GitHub Pages를 기준으로 한다.
+_Avoid_: backend hosting, separate marketing site host
+
+**Public Source Repository**:
+첫 출시에서 확장 프로그램 코드, Product Site, 이슈 지원 경로를 함께 공개하는 GitHub repository.
+_Avoid_: private release repo, separate site repo
+
 **Primary Site Language**:
 Product Site에서 기본으로 제공하는 언어. 보조 언어는 첫 출시 이후 별도 페이지나 섹션으로 확장할 수 있다.
 _Avoid_: only language, locale implementation
+
+**Localized Product Site**:
+Product Site를 둘 이상의 언어로 제공하는 공개 웹페이지 구성. 첫 출시에서는 영어를 기본으로, 한국어를 보조 언어로 제공한다.
+_Avoid_: full i18n platform, Store listing localization
+
+**English Root Site**:
+Product Site의 루트 URL을 영어 기본 페이지로 두고, 한국어 페이지는 `/ko` 경로 아래에 두는 URL 구성.
+_Avoid_: language picker root, JS-only language switch
 
 **Low-Cost Launch**:
 반복 운영비와 운영 표면을 최소화하는 출시 방식. 필수 배포 비용 외의 유료 인프라는 첫 출시 범위에 포함하지 않는다.
@@ -67,3 +83,11 @@ _Avoid_: feedback sink, contact method
 **Free Launch**:
 첫 출시에서 결제, 로그인, 라이선스 체크 없이 모든 기능을 제공하는 출시 방식.
 _Avoid_: paid launch, freemium launch
+
+**Pre-Store CTA**:
+Chrome Web Store URL이 생기기 전 Product Site에 표시하는 설치 안내 상태. 첫 출시 준비 중에는 Chrome Web Store 공개 예정 문구로 표시한다.
+_Avoid_: manual zip install CTA, fake install link
+
+**Local Release Note**:
+Chrome Web Store 제출 준비 체크리스트, asset inventory, 공개 URL 상태처럼 공개 repository에 남기지 않는 로컬 전용 출시 메모.
+_Avoid_: public release checklist, committed submission notes
