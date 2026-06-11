@@ -14,6 +14,11 @@ const siteFiles = [
   "site/styles.css"
 ] as const;
 
+const assetFiles = [
+  "site/icons/icon-128.png",
+  "site/assets/chatgpt-lorem-screenshot.png"
+] as const;
+
 function readProjectFile(path: string): string {
   return readFileSync(join(root, path), "utf8");
 }
@@ -23,6 +28,20 @@ describe("Product Site", () => {
     for (const file of siteFiles) {
       expect(statSync(join(root, file)).isFile()).toBe(true);
     }
+  });
+
+  it("publishes site-local visual assets used by the home pages", () => {
+    for (const file of assetFiles) {
+      expect(statSync(join(root, file)).isFile()).toBe(true);
+    }
+
+    const englishHome = readProjectFile("site/index.html");
+    const koreanHome = readProjectFile("site/ko/index.html");
+
+    expect(englishHome).toContain('src="/icons/icon-128.png"');
+    expect(englishHome).toContain('src="/assets/chatgpt-lorem-screenshot.png"');
+    expect(koreanHome).toContain('src="/icons/icon-128.png"');
+    expect(koreanHome).toContain('src="/assets/chatgpt-lorem-screenshot.png"');
   });
 
   it("uses English root URLs and Korean /ko URLs", () => {
