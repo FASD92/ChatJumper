@@ -3,8 +3,6 @@ import type { ChatAdapterId } from "../shared/sites";
 
 export const DEFAULT_HIGHLIGHT_CLASS_NAME = "chatjumper-highlight";
 export const DEFAULT_HIGHLIGHT_DURATION_MS = 1200;
-const HIGHLIGHT_VISIBILITY_POLL_INTERVAL_MS = 80;
-const MAX_HIGHLIGHT_VISIBILITY_WAIT_MS = 2200;
 
 export type JumpEngineResult =
   | {
@@ -57,7 +55,7 @@ export function jumpToUserMessage(
   });
 
   if (options.highlightEnabled !== false) {
-    flashTargetWhenVisible(target, options);
+    flashTarget(target, options);
   }
 
   return {
@@ -65,40 +63,6 @@ export function jumpToUserMessage(
     status: "JUMPED",
     adapter: adapter.id
   };
-}
-
-function flashTargetWhenVisible(
-  target: HTMLElement,
-  options: JumpEngineOptions,
-  elapsedMs = 0
-): void {
-  if (
-    options.smoothScroll === false ||
-    isTargetInViewport(target) ||
-    elapsedMs >= MAX_HIGHLIGHT_VISIBILITY_WAIT_MS
-  ) {
-    flashTarget(target, options);
-    return;
-  }
-
-  const scheduleTimeout = options.scheduleTimeout ?? window.setTimeout;
-  scheduleTimeout(
-    () =>
-      flashTargetWhenVisible(
-        target,
-        options,
-        elapsedMs + HIGHLIGHT_VISIBILITY_POLL_INTERVAL_MS
-      ),
-    HIGHLIGHT_VISIBILITY_POLL_INTERVAL_MS
-  );
-}
-
-function isTargetInViewport(target: HTMLElement): boolean {
-  const rect = target.getBoundingClientRect();
-  const viewportHeight =
-    target.ownerDocument?.defaultView?.innerHeight ?? window.innerHeight;
-
-  return rect.bottom > 0 && rect.top < viewportHeight;
 }
 
 function flashTarget(target: HTMLElement, options: JumpEngineOptions): void {
