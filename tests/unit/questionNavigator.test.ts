@@ -90,6 +90,54 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next([sixth, second, latest])?.target).toBe(third);
   });
 
+  it("continues the cached click sequence when ChatGPT remounts message nodes with stable ids", () => {
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const initialTargets = createOrderedMessages([
+      [-2400, -2300],
+      [-1900, -1800],
+      [-1400, -1300],
+      [-900, -800],
+      [-200, 80],
+      [-120, -40]
+    ]);
+
+    document.body.replaceChildren(...initialTargets);
+
+    expect(navigator.next(initialTargets)?.target).toBe(initialTargets[5]);
+
+    const afterLatestJumpTargets = createOrderedMessages([
+      [-2400, -2300],
+      [-1900, -1800],
+      [-1400, -1300],
+      [-900, -800],
+      [-160, 80],
+      [360, 680]
+    ]);
+
+    document.body.replaceChildren(...afterLatestJumpTargets);
+
+    expect(navigator.next(afterLatestJumpTargets)?.target).toBe(
+      afterLatestJumpTargets[4]
+    );
+
+    const afterSecondJumpTargets = createOrderedMessages([
+      [-160, 80],
+      [300, 420],
+      [440, 560],
+      [580, 700],
+      [720, 840],
+      [860, 980]
+    ]);
+
+    document.body.replaceChildren(...afterSecondJumpTargets);
+
+    expect(navigator.next(afterSecondJumpTargets)?.target).toBe(
+      afterSecondJumpTargets[3]
+    );
+  });
+
   it("uses the current viewport after manual navigation resets the click sequence", () => {
     const previous = createMessageWithBounds(-160, 80);
     const latest = createMessageWithBounds(-120, -40);
@@ -132,6 +180,25 @@ function createMessageWithBounds(top: number, bottom: number): HTMLElement {
   const element = document.createElement("article");
   setMessageBounds(element, top, bottom);
   return element;
+}
+
+function createOrderedMessages(
+  bounds: readonly (readonly [number, number])[]
+): HTMLElement[] {
+  const latestFirstIds = [
+    "question-6",
+    "question-5",
+    "question-4",
+    "question-3",
+    "question-2",
+    "question-1"
+  ];
+
+  return bounds.map(([top, bottom], index) => {
+    const element = createMessageWithBounds(top, bottom);
+    element.dataset.messageId = latestFirstIds[index];
+    return element;
+  });
 }
 
 function setMessageBounds(

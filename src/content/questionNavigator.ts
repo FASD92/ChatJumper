@@ -1,13 +1,16 @@
 export interface UserMessageTargetSelection {
   target: HTMLElement;
+  targetKey: string | null;
 }
 
 export interface QuestionNavigatorOptions {
   getViewportHeight?: () => number;
+  getTargetKey?: (target: HTMLElement) => string | null;
 }
 
 export interface SelectNextUserMessageTargetOptions {
   viewportHeight?: number;
+  getTargetKey?: (target: HTMLElement) => string | null;
 }
 
 export interface QuestionNavigator {
@@ -17,31 +20,39 @@ export interface QuestionNavigator {
 
 const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.5;
 const PASSED_QUESTION_REFERENCE_Y_PX = 120;
+const STABLE_MESSAGE_ID_SELECTOR = "[data-message-id]";
+
+interface CachedTarget {
+  target: HTMLElement;
+  targetKey: string | null;
+}
 
 export function createQuestionNavigator(
   options: QuestionNavigatorOptions = {}
 ): QuestionNavigator {
-  let cachedTargets: readonly HTMLElement[] = [];
+  const getTargetKey = options.getTargetKey ?? getStableTargetKey;
+  let cachedTargets: readonly CachedTarget[] = [];
   let previousSelection: UserMessageTargetSelection | null = null;
 
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
-      cachedTargets = mergeTargetCache(cachedTargets, targets);
+      cachedTargets = mergeTargetCache(cachedTargets, targets, getTargetKey);
 
       if (previousSelection) {
-        const sequencedTarget = selectPreviousCachedTarget(
+        const sequencedSelection = selectPreviousCachedTarget(
           cachedTargets,
-          previousSelection.target
+          previousSelection
         );
 
-        if (sequencedTarget) {
-          previousSelection = createSelection(sequencedTarget);
+        if (sequencedSelection) {
+          previousSelection = sequencedSelection;
           return previousSelection;
         }
       }
 
       previousSelection = selectNextUserMessageTarget(targets, {
-        viewportHeight: options.getViewportHeight?.() ?? window.innerHeight
+        viewportHeight: options.getViewportHeight?.() ?? window.innerHeight,
+        getTargetKey
       });
 
       return previousSelection;
@@ -68,7 +79,10 @@ export function selectNextUserMessageTarget(
   const viewportTarget =
     passedTargets.at(-1) ?? targets[targets.length - 1];
 
-  return createSelection(viewportTarget);
+  return createSelection(
+    viewportTarget,
+    (options.getTargetKey ?? getStableTargetKey)(viewportTarget)
+  );
 }
 
 function getVerticalBottom(target: HTMLElement): number {
@@ -84,42 +98,135 @@ function getReferenceY(viewportHeight: number): number {
   );
 }
 
-function createSelection(target: HTMLElement): UserMessageTargetSelection {
+function createSelection(
+  target: HTMLElement,
+  targetKey: string | null
+): UserMessageTargetSelection {
   return {
-    target
+    target,
+    targetKey
   };
 }
 
 function mergeTargetCache(
-  cachedTargets: readonly HTMLElement[],
-  currentTargets: readonly HTMLElement[]
-): readonly HTMLElement[] {
+  cachedTargets: readonly CachedTarget[],
+  currentTargets: readonly HTMLElement[],
+  getTargetKey: (target: HTMLElement) => string | null
+): readonly CachedTarget[] {
   if (currentTargets.length === 0) {
     return cachedTargets;
   }
 
-  if (cachedTargets.length === 0 || currentTargets.length >= cachedTargets.length) {
-    return currentTargets;
-  }
-
-  const hasOverlap = currentTargets.some((target) =>
-    cachedTargets.includes(target)
+  const currentEntries = currentTargets.map((target) =>
+    createCachedTarget(target, getTargetKey)
   );
 
-  return hasOverlap ? cachedTargets : currentTargets;
+  if (cachedTargets.length === 0) {
+    return currentEntries;
+  }
+
+  const currentByKey = createCurrentTargetKeyMap(currentEntries);
+  const hasStableKeyOverlap = cachedTargets.some(
+    (entry) => entry.targetKey !== null && currentByKey.has(entry.targetKey)
+  );
+  const hasIdentityOverlap = currentEntries.some((currentEntry) =>
+    cachedTargets.some((cachedEntry) => cachedEntry.target === currentEntry.target)
+  );
+
+  if (!hasStableKeyOverlap && !hasIdentityOverlap) {
+    return currentEntries;
+  }
+
+  if (currentEntries.length >= cachedTargets.length && hasStableKeyOverlap) {
+    return currentEntries;
+  }
+
+  return cachedTargets.map((cachedEntry) => {
+    if (cachedEntry.targetKey === null) {
+      return cachedEntry;
+    }
+
+    return currentByKey.get(cachedEntry.targetKey) ?? cachedEntry;
+  });
 }
 
 function selectPreviousCachedTarget(
-  cachedTargets: readonly HTMLElement[],
-  previousTarget: HTMLElement
-): HTMLElement | null {
-  const previousIndex = cachedTargets.indexOf(previousTarget);
+  cachedTargets: readonly CachedTarget[],
+  previousSelection: UserMessageTargetSelection
+): UserMessageTargetSelection | null {
+  const previousIndex = findPreviousSelectionIndex(
+    cachedTargets,
+    previousSelection
+  );
 
   if (previousIndex <= 0) {
     return null;
   }
 
-  const target = cachedTargets[previousIndex - 1];
+  for (let index = previousIndex - 1; index >= 0; index -= 1) {
+    const cachedTarget = cachedTargets[index];
 
-  return target.isConnected ? target : null;
+    if (cachedTarget.target.isConnected) {
+      return createSelection(cachedTarget.target, cachedTarget.targetKey);
+    }
+  }
+
+  return null;
+}
+
+function createCachedTarget(
+  target: HTMLElement,
+  getTargetKey: (target: HTMLElement) => string | null
+): CachedTarget {
+  return {
+    target,
+    targetKey: getTargetKey(target)
+  };
+}
+
+function createCurrentTargetKeyMap(
+  targets: readonly CachedTarget[]
+): Map<string, CachedTarget> {
+  const result = new Map<string, CachedTarget>();
+
+  for (const target of targets) {
+    if (target.targetKey !== null) {
+      result.set(target.targetKey, target);
+    }
+  }
+
+  return result;
+}
+
+function findPreviousSelectionIndex(
+  cachedTargets: readonly CachedTarget[],
+  previousSelection: UserMessageTargetSelection
+): number {
+  if (previousSelection.targetKey !== null) {
+    const keyIndex = cachedTargets.findIndex(
+      (cachedTarget) => cachedTarget.targetKey === previousSelection.targetKey
+    );
+
+    if (keyIndex !== -1) {
+      return keyIndex;
+    }
+  }
+
+  return cachedTargets.findIndex(
+    (cachedTarget) => cachedTarget.target === previousSelection.target
+  );
+}
+
+function getStableTargetKey(target: HTMLElement): string | null {
+  const ownMessageId = target.dataset.messageId ?? null;
+
+  if (ownMessageId) {
+    return ownMessageId;
+  }
+
+  const ancestorWithMessageId = target.closest<HTMLElement>(
+    STABLE_MESSAGE_ID_SELECTOR
+  );
+
+  return ancestorWithMessageId?.dataset.messageId ?? null;
 }
