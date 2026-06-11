@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatJumper - Jump back to your latest ChatGPT question</title>
+    <meta
+      name="description"
+      content="ChatJumper helps you return to your latest question in long ChatGPT chats without storing or sending your conversations."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <nav class="site-nav" aria-label="Primary">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">CJ</span>
+          <span>ChatJumper</span>
+        </a>
+        <div class="nav-links">
+          <a href="/privacy/">Privacy</a>
+          <a href="/support/">Support</a>
+          <a href="/ko/">한국어</a>
+          <a href="https://github.com/FASD92/ChatJumper">GitHub</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <div>
+            <h1>Jump back to your latest ChatGPT question.</h1>
+            <p class="lead">
+              ChatJumper keeps long ChatGPT conversations navigable with a
+              floating Composer Button, keyboard shortcut, and visible highlight
+              feedback.
+            </p>
+            <div class="cta-row">
+              <span class="button button-static">Coming soon on Chrome Web Store</span>
+              <a class="button button-secondary" href="https://github.com/FASD92/ChatJumper">View source</a>
+            </div>
+          </div>
+          <figure class="hero-card" aria-label="ChatJumper local jump preview">
+            <div class="chat-preview">
+              <p class="chat-row">Assistant answer continues in a long thread...</p>
+              <p class="chat-row user">Latest user question highlighted after jump.</p>
+              <p class="chat-row">ChatJumper scrolls locally in the open page.</p>
+            </div>
+          </figure>
+        </section>
+
+        <section class="section">
+          <h2>Built for one job</h2>
+          <div class="grid">
+            <article class="panel">
+              <h3>Composer Button</h3>
+              <p>Click the ChatJumper button near the composer to move through your user questions.</p>
+            </article>
+            <article class="panel">
+              <h3>Keyboard Shortcut</h3>
+              <p>Use Alt+J on Windows/Linux or Command+J on macOS for the same jump behavior.</p>
+            </article>
+            <article class="panel">
+              <h3>Highlight Feedback</h3>
+              <p>After a jump, ChatJumper highlights the target question so you can reorient quickly.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>How it works</h2>
+          <p class="lead">
+            ChatJumper reads the current page DOM in your browser, identifies
+            user-question positions in the open ChatGPT conversation, and scrolls
+            locally. It does not replace search, export chats, or send content to
+            a server.
+          </p>
+        </section>
+
+        <section class="section">
+          <h2>Privacy-first by default</h2>
+          <div class="grid">
+            <article class="panel">
+              <h3>No chat storage</h3>
+              <p>ChatJumper does not store chat content.</p>
+            </article>
+            <article class="panel">
+              <h3>No server transfer</h3>
+              <p>Your conversation content is not sent to any server.</p>
+            </article>
+            <article class="panel">
+              <h3>No analytics</h3>
+              <p>The first launch does not include analytics or telemetry.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Supported site</h2>
+          <p class="lead">ChatGPT is supported for the first launch. Gemini and Claude are coming soon.</p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>ChatJumper</span>
+        <span><a href="/privacy/">Privacy</a> · <a href="/support/">Support</a></span>
+      </footer>
+    </div>
+  </body>
+</html>

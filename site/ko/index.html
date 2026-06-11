@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatJumper - 최신 ChatGPT 질문으로 다시 이동</title>
+    <meta
+      name="description"
+      content="ChatJumper는 긴 ChatGPT 대화에서 최신 사용자 질문으로 다시 이동하도록 돕는 privacy-first Chrome 확장입니다."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <nav class="site-nav" aria-label="기본">
+        <a class="brand" href="/ko/">
+          <span class="brand-mark" aria-hidden="true">CJ</span>
+          <span>ChatJumper</span>
+        </a>
+        <div class="nav-links">
+          <a href="/ko/privacy/">개인정보</a>
+          <a href="/ko/support/">지원</a>
+          <a href="/">English</a>
+          <a href="https://github.com/FASD92/ChatJumper">GitHub</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <div>
+            <h1>최신 ChatGPT 질문으로 다시 이동하세요.</h1>
+            <p class="lead">
+              ChatJumper는 긴 ChatGPT 대화에서 Composer Button, 키보드
+              단축키, highlight feedback으로 사용자 질문 위치를 빠르게
+              되찾게 해 줍니다.
+            </p>
+            <div class="cta-row">
+              <span class="button button-static">Chrome Web Store 공개 예정</span>
+              <a class="button button-secondary" href="https://github.com/FASD92/ChatJumper">소스 보기</a>
+            </div>
+          </div>
+          <figure class="hero-card" aria-label="ChatJumper 로컬 점프 미리보기">
+            <div class="chat-preview">
+              <p class="chat-row">긴 스레드에서 답변이 계속 이어집니다...</p>
+              <p class="chat-row user">점프 후 최신 사용자 질문이 강조됩니다.</p>
+              <p class="chat-row">ChatJumper는 열린 페이지 안에서 로컬로 스크롤합니다.</p>
+            </div>
+          </figure>
+        </section>
+
+        <section class="section">
+          <h2>하나의 일에 집중합니다</h2>
+          <div class="grid">
+            <article class="panel">
+              <h3>Composer Button</h3>
+              <p>입력창 근처의 ChatJumper 버튼으로 사용자 질문 사이를 이동합니다.</p>
+            </article>
+            <article class="panel">
+              <h3>Keyboard Shortcut</h3>
+              <p>Windows/Linux에서는 Alt+J, macOS에서는 Command+J로 같은 동작을 실행합니다.</p>
+            </article>
+            <article class="panel">
+              <h3>Highlight Feedback</h3>
+              <p>점프한 뒤 목표 질문을 강조해 현재 위치를 빠르게 파악할 수 있습니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>동작 방식</h2>
+          <p class="lead">
+            ChatJumper는 브라우저의 현재 페이지 DOM을 읽어 열린 ChatGPT
+            대화의 사용자 질문 위치를 찾고 로컬로 스크롤합니다. 검색, 채팅
+            내보내기, 서버 전송 기능은 제공하지 않습니다.
+          </p>
+        </section>
+
+        <section class="section">
+          <h2>Privacy-first 기본값</h2>
+          <div class="grid">
+            <article class="panel">
+              <h3>채팅 저장 없음</h3>
+              <p>ChatJumper는 채팅 원문을 저장하지 않습니다.</p>
+            </article>
+            <article class="panel">
+              <h3>서버 전송 없음</h3>
+              <p>대화 내용은 외부 서버로 전송하지 않습니다.</p>
+            </article>
+            <article class="panel">
+              <h3>Analytics 없음</h3>
+              <p>첫 출시는 analytics나 telemetry를 포함하지 않습니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>지원 사이트</h2>
+          <p class="lead">첫 출시는 ChatGPT를 지원합니다. Gemini와 Claude는 지원 예정입니다.</p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>ChatJumper</span>
+        <span><a href="/ko/privacy/">개인정보</a> · <a href="/ko/support/">지원</a></span>
+      </footer>
+    </div>
+  </body>
+</html>
