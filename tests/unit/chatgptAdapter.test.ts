@@ -116,6 +116,17 @@ describe("chatGptAdapter", () => {
       thirdTurn
     ]);
   });
+
+  it("includes virtualized ChatGPT user turn wrappers without mounted message text", () => {
+    const thread = appendThread();
+    const virtualized = appendVirtualizedUserTurn(thread, "turn-35");
+    const mounted = appendWrappedUserTurn(thread, "turn-36", "latest question");
+
+    makeVisibleTree(virtualized);
+    makeVisibleTree(mounted);
+
+    expect(findChatGptUserMessages(document)).toEqual([virtualized, mounted]);
+  });
 });
 
 const USER_MESSAGE_SELECTOR = '[data-message-author-role="user"]';
@@ -149,9 +160,45 @@ function appendUserTurn(
   return section;
 }
 
+function appendVirtualizedUserTurn(
+  parent: HTMLElement,
+  turnId: string
+): HTMLElement {
+  const wrapper = document.createElement("div");
+  const section = document.createElement("section");
+
+  wrapper.dataset.turnIdContainer = turnId;
+  section.dataset.turn = "user";
+  section.dataset.turnId = turnId;
+  section.dataset.turnIdContainer = turnId;
+  section.dataset.testid = "conversation-turn-37";
+  wrapper.append(section);
+  parent.append(wrapper);
+
+  return wrapper;
+}
+
+function appendWrappedUserTurn(
+  parent: HTMLElement,
+  turnId: string,
+  text: string
+): HTMLElement {
+  const wrapper = appendVirtualizedUserTurn(parent, turnId);
+  const section = wrapper.querySelector<HTMLElement>("section")!;
+
+  appendUserMessage(section, text).dataset.messageId = turnId;
+
+  return wrapper;
+}
+
 function makeVisible(element: HTMLElement): void {
   element.getClientRects = () =>
     [{ width: 20, height: 20 }] as unknown as DOMRectList;
+}
+
+function makeVisibleTree(element: HTMLElement): void {
+  makeVisible(element);
+  element.querySelectorAll<HTMLElement>("*").forEach(makeVisible);
 }
 
 function makeHidden(element: HTMLElement): void {

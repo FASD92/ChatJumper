@@ -2,6 +2,7 @@ import type { ChatAdapter } from "./base";
 
 const USER_MESSAGE_SELECTOR = '[data-message-author-role="user"]';
 const USER_TURN_SELECTOR = '[data-turn="user"]';
+const TURN_CONTAINER_SELECTOR = "[data-turn-id-container]";
 const THREAD_ROOT_SELECTORS = ["#thread", "main"];
 const EXCLUDED_ANCESTOR_SELECTOR = [
   "form",
@@ -37,8 +38,45 @@ export function findChatGptUserMessages(
   root: Document | HTMLElement
 ): HTMLElement[] {
   const searchRoot = findConversationRoot(root);
+  const turnTargets = findChatGptUserTurnTargets(searchRoot);
+
+  if (turnTargets.length > 0) {
+    return turnTargets;
+  }
+
+  return findMountedUserMessageTargets(searchRoot);
+}
+
+function findChatGptUserTurnTargets(
+  root: Document | HTMLElement
+): HTMLElement[] {
+  const containers = Array.from(
+    root.querySelectorAll<HTMLElement>(TURN_CONTAINER_SELECTOR)
+  );
+  const targets: HTMLElement[] = [];
+  const seenTargets = new Set<HTMLElement>();
+
+  for (const container of containers) {
+    if (!isTopLevelTurnContainer(container) || !isUsableUserTurn(container)) {
+      continue;
+    }
+
+    if (seenTargets.has(container)) {
+      continue;
+    }
+
+    targets.push(container);
+    seenTargets.add(container);
+  }
+
+  return targets;
+}
+
+function findMountedUserMessageTargets(
+  root: Document | HTMLElement
+): HTMLElement[] {
   const candidates = Array.from(
-    searchRoot.querySelectorAll<HTMLElement>(USER_MESSAGE_SELECTOR)
+    root.querySelectorAll<HTMLElement>(USER_MESSAGE_SELECTOR)
   );
   const targets: HTMLElement[] = [];
   const seenTargets = new Set<HTMLElement>();
@@ -59,6 +97,25 @@ export function findChatGptUserMessages(
   }
 
   return targets;
+}
+
+function isTopLevelTurnContainer(element: HTMLElement): boolean {
+  return !element.parentElement?.closest(TURN_CONTAINER_SELECTOR);
+}
+
+function isUsableUserTurn(element: HTMLElement): boolean {
+  return (
+    hasVisibleBox(element) &&
+    hasUserTurnMarker(element) &&
+    !element.closest(EXCLUDED_ANCESTOR_SELECTOR)
+  );
+}
+
+function hasUserTurnMarker(element: HTMLElement): boolean {
+  return (
+    element.matches(USER_TURN_SELECTOR) ||
+    element.querySelector(USER_TURN_SELECTOR) !== null
+  );
 }
 
 function isUsableMessageCandidate(element: HTMLElement): boolean {
