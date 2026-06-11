@@ -8,3 +8,9 @@ test-results/
 docs/*.local.md
 site/assets/raw/
 artifacts/
+AGENTS.md
+CONTEXT.md
+docs/adr/
+docs/release-plan.md
+docs/superpowers/
+docs_spec_ChatJumper.md
