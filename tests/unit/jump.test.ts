@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from "vitest";
 import {
   findAdapterForUrl,
@@ -93,6 +95,35 @@ describe("jumpToLatestUserMessage", () => {
 
     expect(target.removeClass).toHaveBeenCalledWith(DEFAULT_HIGHLIGHT_CLASS_NAME);
   });
+
+  it("waits until the target is visible before starting the highlight timer", () => {
+    const target = createRealTarget({ visible: false });
+    const adapter = createAdapter({
+      canHandle: () => true,
+      target
+    });
+    const scheduledCallbacks: Array<() => void> = [];
+    const scheduleTimeout = vi.fn((callback: () => void, _delayMs: number) => {
+      scheduledCallbacks.push(callback);
+    });
+
+    jumpToLatestUserMessage(adapter, {
+      root: createRoot(),
+      scheduleTimeout
+    });
+
+    expect(target.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(false);
+
+    setTargetVisibility(target, true);
+    scheduledCallbacks[0]();
+
+    expect(target.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(true);
+    expect(scheduleTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1200);
+
+    scheduledCallbacks.at(-1)?.();
+
+    expect(target.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(false);
+  });
 });
 
 function createAdapter(options: {
@@ -122,6 +153,8 @@ function createTarget(): {
   const removeClass = vi.fn();
   const element = {
     scrollIntoView,
+    getBoundingClientRect: () =>
+      ({ top: 100, bottom: 200 }) as unknown as DOMRect,
     classList: {
       add: addClass,
       remove: removeClass
@@ -134,4 +167,20 @@ function createTarget(): {
     addClass,
     removeClass
   };
+}
+
+function createRealTarget(options: { visible: boolean }): HTMLElement {
+  const target = document.createElement("section");
+  target.scrollIntoView = vi.fn();
+  setTargetVisibility(target, options.visible);
+  document.body.append(target);
+  return target;
+}
+
+function setTargetVisibility(target: HTMLElement, visible: boolean): void {
+  target.getBoundingClientRect = () =>
+    ({
+      top: visible ? 100 : 2000,
+      bottom: visible ? 200 : 2100
+    }) as unknown as DOMRect;
 }
