@@ -138,6 +138,54 @@ describe("selectNextUserMessageTarget", () => {
     );
   });
 
+  it("continues the cached click sequence when ChatGPT turn sections expose only turn ids", () => {
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const initialTargets = createOrderedTurnSections([
+      [-2400, -2300],
+      [-1900, -1800],
+      [-1400, -1300],
+      [-900, -800],
+      [-200, 80],
+      [-120, -40]
+    ]);
+
+    document.body.replaceChildren(...initialTargets);
+
+    expect(navigator.next(initialTargets)?.target).toBe(initialTargets[5]);
+
+    const afterLatestJumpTargets = createOrderedTurnSections([
+      [-2400, -2300],
+      [-1900, -1800],
+      [-1400, -1300],
+      [-900, -800],
+      [-160, 80],
+      [360, 680]
+    ]);
+
+    document.body.replaceChildren(...afterLatestJumpTargets);
+
+    expect(navigator.next(afterLatestJumpTargets)?.target).toBe(
+      afterLatestJumpTargets[4]
+    );
+
+    const afterSecondJumpTargets = createOrderedTurnSections([
+      [-2400, -2300],
+      [-1900, -1800],
+      [-160, 80],
+      [360, 680],
+      [720, 840],
+      [860, 980]
+    ]);
+
+    document.body.replaceChildren(...afterSecondJumpTargets);
+
+    expect(navigator.next(afterSecondJumpTargets)?.target).toBe(
+      afterSecondJumpTargets[3]
+    );
+  });
+
   it("uses the current viewport after manual navigation resets the click sequence", () => {
     const previous = createMessageWithBounds(-160, 80);
     const latest = createMessageWithBounds(-120, -40);
@@ -198,6 +246,22 @@ function createOrderedMessages(
     const element = createMessageWithBounds(top, bottom);
     element.dataset.messageId = latestFirstIds[index];
     return element;
+  });
+}
+
+function createOrderedTurnSections(
+  bounds: readonly (readonly [number, number])[]
+): HTMLElement[] {
+  return createOrderedMessages(bounds).map((message) => {
+    const section = document.createElement("section");
+    section.dataset.turn = "user";
+    section.dataset.turnId = message.dataset.messageId;
+    setMessageBounds(
+      section,
+      message.getBoundingClientRect().top,
+      message.getBoundingClientRect().bottom
+    );
+    return section;
   });
 }
 

@@ -20,7 +20,12 @@ export interface QuestionNavigator {
 
 const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.5;
 const PASSED_QUESTION_REFERENCE_Y_PX = 120;
-const STABLE_MESSAGE_ID_SELECTOR = "[data-message-id]";
+const STABLE_TARGET_KEY_SELECTOR = [
+  "[data-message-id]",
+  "[data-turn-id]",
+  "[data-turn-id-container]",
+  '[data-testid^="conversation-turn-"]'
+].join(",");
 
 interface CachedTarget {
   target: HTMLElement;
@@ -218,15 +223,28 @@ function findPreviousSelectionIndex(
 }
 
 function getStableTargetKey(target: HTMLElement): string | null {
-  const ownMessageId = target.dataset.messageId ?? null;
+  const ownTargetKey = readStableTargetKey(target);
 
-  if (ownMessageId) {
-    return ownMessageId;
+  if (ownTargetKey) {
+    return ownTargetKey;
   }
 
-  const ancestorWithMessageId = target.closest<HTMLElement>(
-    STABLE_MESSAGE_ID_SELECTOR
+  const ancestorWithStableKey = target.closest<HTMLElement>(
+    STABLE_TARGET_KEY_SELECTOR
   );
 
-  return ancestorWithMessageId?.dataset.messageId ?? null;
+  return ancestorWithStableKey ? readStableTargetKey(ancestorWithStableKey) : null;
+}
+
+function readStableTargetKey(target: HTMLElement): string | null {
+  const conversationTurnTestId = target.getAttribute("data-testid");
+
+  return (
+    target.dataset.messageId ??
+    target.dataset.turnId ??
+    target.dataset.turnIdContainer ??
+    (conversationTurnTestId?.startsWith("conversation-turn-")
+      ? conversationTurnTestId
+      : null)
+  );
 }

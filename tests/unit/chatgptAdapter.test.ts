@@ -96,7 +96,29 @@ describe("chatGptAdapter", () => {
 
     expect(findChatGptUserMessages(document)).toEqual([first, second]);
   });
+
+  it("uses the ChatGPT user turn section as the scroll target when available", () => {
+    const thread = appendThread();
+    const firstTurn = appendUserTurn(thread, "turn-35", "older question");
+    const secondTurn = appendUserTurn(thread, "turn-36", "previous question");
+    const thirdTurn = appendUserTurn(thread, "turn-37", "third question");
+
+    makeVisible(firstTurn);
+    makeVisible(secondTurn);
+    makeVisible(thirdTurn);
+    makeVisible(firstTurn.querySelector<HTMLElement>(USER_MESSAGE_SELECTOR)!);
+    makeVisible(secondTurn.querySelector<HTMLElement>(USER_MESSAGE_SELECTOR)!);
+    makeVisible(thirdTurn.querySelector<HTMLElement>(USER_MESSAGE_SELECTOR)!);
+
+    expect(findChatGptUserMessages(document)).toEqual([
+      firstTurn,
+      secondTurn,
+      thirdTurn
+    ]);
+  });
 });
+
+const USER_MESSAGE_SELECTOR = '[data-message-author-role="user"]';
 
 function appendThread(): HTMLElement {
   const thread = document.createElement("main");
@@ -111,6 +133,20 @@ function appendUserMessage(parent: HTMLElement, text: string): HTMLElement {
   article.textContent = text;
   parent.append(article);
   return article;
+}
+
+function appendUserTurn(
+  parent: HTMLElement,
+  turnId: string,
+  text: string
+): HTMLElement {
+  const section = document.createElement("section");
+  section.dataset.turn = "user";
+  section.dataset.turnId = turnId;
+  section.dataset.testid = "conversation-turn-37";
+  appendUserMessage(section, text).dataset.messageId = turnId;
+  parent.append(section);
+  return section;
 }
 
 function makeVisible(element: HTMLElement): void {

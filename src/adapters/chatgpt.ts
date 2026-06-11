@@ -1,6 +1,7 @@
 import type { ChatAdapter } from "./base";
 
 const USER_MESSAGE_SELECTOR = '[data-message-author-role="user"]';
+const USER_TURN_SELECTOR = '[data-turn="user"]';
 const THREAD_ROOT_SELECTORS = ["#thread", "main"];
 const EXCLUDED_ANCESTOR_SELECTOR = [
   "form",
@@ -39,8 +40,25 @@ export function findChatGptUserMessages(
   const candidates = Array.from(
     searchRoot.querySelectorAll<HTMLElement>(USER_MESSAGE_SELECTOR)
   );
+  const targets: HTMLElement[] = [];
+  const seenTargets = new Set<HTMLElement>();
 
-  return candidates.filter(isUsableMessageCandidate);
+  for (const candidate of candidates) {
+    if (!isUsableMessageCandidate(candidate)) {
+      continue;
+    }
+
+    const target = findMessageScrollTarget(candidate);
+
+    if (!hasVisibleBox(target) || seenTargets.has(target)) {
+      continue;
+    }
+
+    targets.push(target);
+    seenTargets.add(target);
+  }
+
+  return targets;
 }
 
 function isUsableMessageCandidate(element: HTMLElement): boolean {
@@ -61,6 +79,10 @@ function hasVisibleBox(element: HTMLElement): boolean {
 
 function hasVisibleText(element: HTMLElement): boolean {
   return element.textContent?.trim().length ? true : false;
+}
+
+function findMessageScrollTarget(message: HTMLElement): HTMLElement {
+  return message.closest<HTMLElement>(USER_TURN_SELECTOR) ?? message;
 }
 
 function findConversationRoot(
