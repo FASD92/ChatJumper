@@ -38,24 +38,30 @@ describe("Product Site", () => {
     const englishHome = readProjectFile("site/index.html");
     const koreanHome = readProjectFile("site/ko/index.html");
 
-    expect(englishHome).toContain('src="/icons/icon-128.png"');
-    expect(englishHome).toContain('src="/assets/chatgpt-lorem-screenshot.png"');
-    expect(koreanHome).toContain('src="/icons/icon-128.png"');
-    expect(koreanHome).toContain('src="/assets/chatgpt-lorem-screenshot.png"');
+    expect(englishHome).toContain('src="icons/icon-128.png"');
+    expect(englishHome).toContain('src="assets/chatgpt-lorem-screenshot.png"');
+    expect(koreanHome).toContain('src="../icons/icon-128.png"');
+    expect(koreanHome).toContain('src="../assets/chatgpt-lorem-screenshot.png"');
   });
 
-  it("uses English root URLs and Korean /ko URLs", () => {
+  it("uses relative URLs compatible with GitHub project Pages", () => {
     const englishHome = readProjectFile("site/index.html");
     const koreanHome = readProjectFile("site/ko/index.html");
 
     expect(englishHome).toContain('lang="en"');
-    expect(englishHome).toContain('href="/privacy/"');
-    expect(englishHome).toContain('href="/support/"');
-    expect(englishHome).toContain('href="/ko/"');
+    expect(englishHome).toContain('href="privacy/"');
+    expect(englishHome).toContain('href="support/"');
+    expect(englishHome).toContain('href="ko/"');
     expect(koreanHome).toContain('lang="ko"');
-    expect(koreanHome).toContain('href="/ko/privacy/"');
-    expect(koreanHome).toContain('href="/ko/support/"');
-    expect(koreanHome).toContain('href="/"');
+    expect(koreanHome).toContain('href="privacy/"');
+    expect(koreanHome).toContain('href="support/"');
+    expect(koreanHome).toContain('href="../"');
+
+    for (const file of siteFiles) {
+      const text = readProjectFile(file);
+
+      expect(text).not.toMatch(/\s(?:href|src)="\/(?!\/)/);
+    }
   });
 
   it("communicates launch scope and pre-store state", () => {
@@ -68,6 +74,23 @@ describe("Product Site", () => {
     expect(koreanHome).toContain("Chrome Web Store 공개 예정");
     expect(koreanHome).toContain("ChatGPT");
     expect(koreanHome).toContain("Gemini와 Claude는 지원 예정");
+  });
+
+  it("keeps the home page visually restrained for a utility extension", () => {
+    const englishHome = readProjectFile("site/index.html");
+    const koreanHome = readProjectFile("site/ko/index.html");
+    const styles = readProjectFile("site/styles.css");
+
+    expect(englishHome).toContain('class="status-row"');
+    expect(koreanHome).toContain('class="status-row"');
+    expect(englishHome).toContain('class="utility-panel"');
+    expect(styles).toContain("--accent: #5850d8");
+    expect(styles).not.toContain("linear-gradient(");
+    expect(styles).not.toContain("border-radius: 999px");
+    expect(styles).not.toContain("box-shadow: 0 18px");
+    expect(styles).not.toContain(".brand-mark");
+    expect(styles).not.toContain(".chat-preview");
+    expect(styles).not.toContain(".chat-row");
   });
 
   it("states privacy requirements on both privacy pages", () => {

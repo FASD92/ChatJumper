@@ -8,19 +8,20 @@
       name="description"
       content="ChatJumper helps you return to your latest question in long ChatGPT chats without storing or sending your conversations."
     />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="icons/icon-128.png" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="site-shell">
       <nav class="site-nav" aria-label="Primary">
-        <a class="brand" href="/">
-          <img src="/icons/icon-128.png" alt="" />
+        <a class="brand" href="./">
+          <img src="icons/icon-128.png" alt="" />
           <span>ChatJumper</span>
         </a>
         <div class="nav-links">
-          <a href="/privacy/">Privacy</a>
-          <a href="/support/">Support</a>
-          <a href="/ko/">한국어</a>
+          <a href="privacy/">Privacy</a>
+          <a href="support/">Support</a>
+          <a href="ko/">한국어</a>
           <a href="https://github.com/FASD92/ChatJumper">GitHub</a>
         </div>
       </nav>
@@ -28,21 +29,29 @@
       <main>
         <section class="hero">
           <div>
-            <p class="eyebrow">Privacy-first Chrome extension</p>
-            <h1>Jump back to your latest ChatGPT question.</h1>
+            <p class="eyebrow">Chrome extension for long AI chats</p>
+            <h1>Find your last question without scrolling.</h1>
             <p class="lead">
-              ChatJumper keeps long ChatGPT conversations navigable with a
-              floating Composer Button, keyboard shortcut, and visible highlight
-              feedback.
+              ChatJumper is a small browser utility for returning to your own
+              questions in long ChatGPT conversations.
             </p>
+            <div class="status-row" aria-label="Launch status">
+              <span>ChatGPT first</span>
+              <span>Local scroll only</span>
+              <span>Gemini and Claude are coming soon</span>
+            </div>
             <div class="cta-row">
-              <a class="button" href="/support/">Coming soon on Chrome Web Store</a>
+              <a class="button" href="support/">Coming soon on Chrome Web Store</a>
               <a class="button button-secondary" href="https://github.com/FASD92/ChatJumper">View source</a>
             </div>
+            <div class="utility-panel">
+              <strong>What it does</strong>
+              <p>Reads the current page DOM, finds user-question positions, then scrolls in the open tab.</p>
+            </div>
           </div>
-          <figure class="hero-card">
+          <figure class="product-shot">
             <img
-              src="/assets/chatgpt-lorem-screenshot.png"
+              src="assets/chatgpt-lorem-screenshot.png"
               alt="ChatJumper highlighting a lorem ipsum question inside ChatGPT"
             />
           </figure>
@@ -102,7 +111,7 @@
 
       <footer class="footer">
         <span>ChatJumper</span>
-        <span><a href="/privacy/">Privacy</a> · <a href="/support/">Support</a></span>
+        <span><a href="privacy/">Privacy</a> · <a href="support/">Support</a></span>
       </footer>
     </div>
   </body>
