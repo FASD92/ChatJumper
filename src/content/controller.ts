@@ -21,6 +21,15 @@ import {
 
 const DEFAULT_ADAPTERS: readonly ChatAdapter[] = [chatGptAdapter];
 const RESYNC_DELAY_MS = 250;
+const NAVIGATION_RESET_KEYS = new Set([
+  "ArrowDown",
+  "ArrowUp",
+  "End",
+  "Home",
+  "PageDown",
+  "PageUp",
+  " "
+]);
 const FALLBACK_ERROR_RESPONSE: RuntimeResponse = {
   ok: false,
   reason: "NOT_FOUND"
@@ -156,6 +165,24 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
     return true;
   });
 
+  root.addEventListener("wheel", resetQuestionNavigation, {
+    capture: true,
+    passive: true
+  });
+  root.addEventListener("touchmove", resetQuestionNavigation, {
+    capture: true,
+    passive: true
+  });
+  root.addEventListener(
+    "keydown",
+    (event) => {
+      if (NAVIGATION_RESET_KEYS.has(event.key)) {
+        resetQuestionNavigation();
+      }
+    },
+    { capture: true }
+  );
+
   storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "local" || !changes[SETTINGS_STORAGE_KEY]) {
       return;
@@ -207,6 +234,10 @@ export async function bootContent(options: BootContentOptions = {}): Promise<voi
         });
       }
     });
+  }
+
+  function resetQuestionNavigation(): void {
+    questionNavigator.reset();
   }
 }
 

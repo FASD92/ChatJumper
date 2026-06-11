@@ -12,6 +12,7 @@ export interface SelectNextUserMessageTargetOptions {
 
 export interface QuestionNavigator {
   next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null;
+  reset(): void;
 }
 
 const DEFAULT_VIEWPORT_THRESHOLD_RATIO = 0.5;
@@ -20,11 +21,34 @@ const PASSED_QUESTION_REFERENCE_Y_PX = 120;
 export function createQuestionNavigator(
   options: QuestionNavigatorOptions = {}
 ): QuestionNavigator {
+  let cachedTargets: readonly HTMLElement[] = [];
+  let previousSelection: UserMessageTargetSelection | null = null;
+
   return {
     next(targets: readonly HTMLElement[]): UserMessageTargetSelection | null {
-      return selectNextUserMessageTarget(targets, {
+      cachedTargets = mergeTargetCache(cachedTargets, targets);
+
+      if (previousSelection) {
+        const sequencedTarget = selectPreviousCachedTarget(
+          cachedTargets,
+          previousSelection.target
+        );
+
+        if (sequencedTarget) {
+          previousSelection = createSelection(sequencedTarget);
+          return previousSelection;
+        }
+      }
+
+      previousSelection = selectNextUserMessageTarget(targets, {
         viewportHeight: options.getViewportHeight?.() ?? window.innerHeight
       });
+
+      return previousSelection;
+    },
+
+    reset(): void {
+      previousSelection = null;
     }
   };
 }
@@ -64,4 +88,38 @@ function createSelection(target: HTMLElement): UserMessageTargetSelection {
   return {
     target
   };
+}
+
+function mergeTargetCache(
+  cachedTargets: readonly HTMLElement[],
+  currentTargets: readonly HTMLElement[]
+): readonly HTMLElement[] {
+  if (currentTargets.length === 0) {
+    return cachedTargets;
+  }
+
+  if (cachedTargets.length === 0 || currentTargets.length >= cachedTargets.length) {
+    return currentTargets;
+  }
+
+  const hasOverlap = currentTargets.some((target) =>
+    cachedTargets.includes(target)
+  );
+
+  return hasOverlap ? cachedTargets : currentTargets;
+}
+
+function selectPreviousCachedTarget(
+  cachedTargets: readonly HTMLElement[],
+  previousTarget: HTMLElement
+): HTMLElement | null {
+  const previousIndex = cachedTargets.indexOf(previousTarget);
+
+  if (previousIndex <= 0) {
+    return null;
+  }
+
+  const target = cachedTargets[previousIndex - 1];
+
+  return target.isConnected ? target : null;
 }

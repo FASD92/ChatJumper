@@ -365,6 +365,7 @@ describe("bootContent", () => {
     await sendJumpRequest(runtime);
 
     setTargetTop(latest.element, -80);
+    document.dispatchEvent(new WheelEvent("wheel", { deltaY: 200 }));
 
     await sendJumpRequest(runtime);
 

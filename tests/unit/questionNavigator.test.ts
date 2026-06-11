@@ -63,6 +63,49 @@ describe("selectNextUserMessageTarget", () => {
     expect(navigator.next([third, second, latest])?.target).toBe(third);
   });
 
+  it("continues the cached click sequence when the current DOM list skips intermediate questions", () => {
+    const sixth = createMessageWithBounds(-2400, -2300);
+    const fifth = createMessageWithBounds(-1900, -1800);
+    const fourth = createMessageWithBounds(-1400, -1300);
+    const third = createMessageWithBounds(-900, -800);
+    const second = createMessageWithBounds(-200, 80);
+    const latest = createMessageWithBounds(-120, -40);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+    const fullTargets = [sixth, fifth, fourth, third, second, latest];
+
+    document.body.append(...fullTargets);
+
+    expect(navigator.next(fullTargets)?.target).toBe(latest);
+
+    setMessageBounds(latest, 360, 680);
+    setMessageBounds(second, -160, 80);
+
+    expect(navigator.next([sixth, second, latest])?.target).toBe(second);
+
+    setMessageBounds(second, 360, 680);
+    setMessageBounds(sixth, -160, 80);
+
+    expect(navigator.next([sixth, second, latest])?.target).toBe(third);
+  });
+
+  it("uses the current viewport after manual navigation resets the click sequence", () => {
+    const previous = createMessageWithBounds(-160, 80);
+    const latest = createMessageWithBounds(-120, -40);
+    const navigator = createQuestionNavigator({
+      getViewportHeight: () => 1000
+    });
+
+    expect(navigator.next([previous, latest])?.target).toBe(latest);
+
+    setMessageBounds(latest, 100, 300);
+    setMessageBounds(previous, -160, 80);
+    navigator.reset();
+
+    expect(navigator.next([previous, latest])?.target).toBe(previous);
+  });
+
   it("uses the current viewport after a small wheel movement between the latest and previous question", () => {
     const previous = createMessageWithBounds(-160, 80);
     const latest = createMessageWithBounds(100, 300);
