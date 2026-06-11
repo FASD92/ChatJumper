@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from "vitest";
 import {
   findAdapterForUrl,
@@ -93,6 +95,47 @@ describe("jumpToLatestUserMessage", () => {
 
     expect(target.removeClass).toHaveBeenCalledWith(DEFAULT_HIGHLIGHT_CLASS_NAME);
   });
+
+  it("highlights the mounted user message inside a turn wrapper", () => {
+    const wrapper = createTurnWrapper();
+    const message = appendUserMessage(wrapper);
+    const adapter = createAdapter({
+      canHandle: () => true,
+      target: wrapper
+    });
+
+    jumpToLatestUserMessage(adapter, {
+      root: document,
+      scheduleTimeout: vi.fn()
+    });
+
+    expect(wrapper.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(false);
+    expect(message.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(true);
+  });
+
+  it("waits for a virtualized wrapper to mount its user message before highlighting", () => {
+    const wrapper = createTurnWrapper();
+    const adapter = createAdapter({
+      canHandle: () => true,
+      target: wrapper
+    });
+    const scheduledCallbacks: Array<() => void> = [];
+    const scheduleTimeout = vi.fn((callback: () => void, _delayMs: number) => {
+      scheduledCallbacks.push(callback);
+    });
+
+    jumpToLatestUserMessage(adapter, {
+      root: document,
+      scheduleTimeout
+    });
+
+    expect(wrapper.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(false);
+
+    const message = appendUserMessage(wrapper);
+    scheduledCallbacks[0]();
+
+    expect(message.classList.contains(DEFAULT_HIGHLIGHT_CLASS_NAME)).toBe(true);
+  });
 });
 
 function createAdapter(options: {
@@ -134,4 +177,20 @@ function createTarget(): {
     addClass,
     removeClass
   };
+}
+
+function createTurnWrapper(): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.dataset.turnIdContainer = "turn-1";
+  wrapper.scrollIntoView = vi.fn();
+  document.body.append(wrapper);
+  return wrapper;
+}
+
+function appendUserMessage(parent: HTMLElement): HTMLElement {
+  const message = document.createElement("div");
+  message.dataset.messageAuthorRole = "user";
+  message.textContent = "question";
+  parent.append(message);
+  return message;
 }

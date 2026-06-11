@@ -3,6 +3,9 @@ import type { ChatAdapterId } from "../shared/sites";
 
 export const DEFAULT_HIGHLIGHT_CLASS_NAME = "chatjumper-highlight";
 export const DEFAULT_HIGHLIGHT_DURATION_MS = 1200;
+const CHATGPT_USER_MESSAGE_SELECTOR = '[data-message-author-role="user"]';
+const HIGHLIGHT_TARGET_RETRY_INTERVAL_MS = 50;
+const MAX_HIGHLIGHT_TARGET_WAIT_MS = 800;
 
 export type JumpEngineResult =
   | {
@@ -55,7 +58,7 @@ export function jumpToUserMessage(
   });
 
   if (options.highlightEnabled !== false) {
-    flashTarget(target, options);
+    flashResolvedTarget(target, options);
   }
 
   return {
@@ -63,6 +66,47 @@ export function jumpToUserMessage(
     status: "JUMPED",
     adapter: adapter.id
   };
+}
+
+function flashResolvedTarget(
+  target: HTMLElement,
+  options: JumpEngineOptions,
+  elapsedMs = 0
+): void {
+  const highlightTarget = findHighlightTarget(target);
+
+  if (highlightTarget) {
+    flashTarget(highlightTarget, options);
+    return;
+  }
+
+  if (elapsedMs >= MAX_HIGHLIGHT_TARGET_WAIT_MS) {
+    flashTarget(target, options);
+    return;
+  }
+
+  const scheduleTimeout = options.scheduleTimeout ?? window.setTimeout;
+  scheduleTimeout(
+    () =>
+      flashResolvedTarget(
+        target,
+        options,
+        elapsedMs + HIGHLIGHT_TARGET_RETRY_INTERVAL_MS
+      ),
+    HIGHLIGHT_TARGET_RETRY_INTERVAL_MS
+  );
+}
+
+function findHighlightTarget(target: HTMLElement): HTMLElement | null {
+  if (!isChatGptTurnWrapper(target)) {
+    return target;
+  }
+
+  return target.querySelector<HTMLElement>(CHATGPT_USER_MESSAGE_SELECTOR);
+}
+
+function isChatGptTurnWrapper(target: HTMLElement): boolean {
+  return target.dataset?.turnIdContainer !== undefined;
 }
 
 function flashTarget(target: HTMLElement, options: JumpEngineOptions): void {
