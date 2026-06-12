@@ -36,6 +36,26 @@ First launch support is ChatGPT. Gemini and Claude are coming soon.
 - No chat content server transfer.
 - User preferences are stored in `chrome.storage.local`.
 
+## Dashboard URLs
+
+- Homepage URL: https://fasd92.github.io/ChatJumper/
+- Privacy Policy URL: https://fasd92.github.io/ChatJumper/privacy/
+- Support URL: https://fasd92.github.io/ChatJumper/support/
+
+## Privacy Practices Fields
+
+- Single purpose: ChatJumper helps users jump to their own recent questions inside the current ChatGPT conversation.
+- Remote code: No, I am not using remote code.
+- Data usage: No user data collected or transmitted by ChatJumper. Local settings stay in `chrome.storage.local`.
+
+## Launch Asset Checklist
+
+- Release ZIP: run `npm run build` and `npm run release:zip`, then upload `artifacts/chatjumper-v0.1.0.zip`.
+- Store icon: use the packaged 128x128 px icon from `public/icons/icon-128.png`.
+- Screenshots: prepare at least one 1280x800 px screenshot, up to 5 total.
+- Small promo tile: prepare one 440x280 px small promo tile as PNG or JPEG.
+- Marquee promo tile: prepare one 1400x560 px marquee promo tile as PNG or JPEG; this is optional.
+
 ## Reviewer Notes
 
 No test account is required because ChatJumper runs in the user's own logged-in ChatGPT session. The extension does not access a developer backend and does not require account linking.
@@ -51,3 +71,9 @@ No test account is required because ChatJumper runs in the user's own logged-in 
 긴 ChatGPT 대화에서 위치를 잃지 마세요. ChatJumper는 최신 질문으로 즉시 돌아갈 수 있게 도와주는 privacy-first Chrome 확장 프로그램입니다.
 
 첫 출시는 ChatGPT를 지원하며, Gemini와 Claude는 지원 예정입니다.
+
+## Official References
+
+- Prepare your extension: https://developer.chrome.com/docs/webstore/prepare
+- Complete your listing information: https://developer.chrome.com/docs/webstore/cws-dashboard-listing
+- Fill out the privacy fields: https://developer.chrome.com/docs/webstore/cws-dashboard-privacy

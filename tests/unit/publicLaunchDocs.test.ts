@@ -37,6 +37,23 @@ describe("public launch documentation", () => {
     expect(pack).toContain("Korean Draft");
   });
 
+  it("documents Chrome Web Store dashboard fields and launch assets", () => {
+    const pack = readProjectFile("docs/store-submission-pack.md");
+
+    expect(pack).toContain("Homepage URL: https://fasd92.github.io/ChatJumper/");
+    expect(pack).toContain(
+      "Privacy Policy URL: https://fasd92.github.io/ChatJumper/privacy/"
+    );
+    expect(pack).toContain(
+      "Support URL: https://fasd92.github.io/ChatJumper/support/"
+    );
+    expect(pack).toContain("No, I am not using remote code");
+    expect(pack).toContain("No user data collected");
+    expect(pack).toContain("1280x800 px screenshot");
+    expect(pack).toContain("440x280 px small promo tile");
+    expect(pack).toContain("1400x560 px marquee promo tile");
+  });
+
   it("keeps local-only release material out of public docs", () => {
     for (const file of ["README.md", "docs/store-submission-pack.md"]) {
       const text = readProjectFile(file);
