@@ -117,6 +117,14 @@ describe("Product Site", () => {
     expect(koreanSupport).toContain("cdrootdev@gmail.com");
   });
 
+  it("keeps the Google site ownership verification file published", () => {
+    const verification = readProjectFile("site/google2fb91fbcc8fa4685.html");
+
+    expect(verification.trim()).toBe(
+      "google-site-verification: google2fb91fbcc8fa4685.html"
+    );
+  });
+
   it("does not expose local-only release notes or fake install links", () => {
     for (const file of siteFiles) {
       const text = readProjectFile(file);
