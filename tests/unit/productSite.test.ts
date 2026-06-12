@@ -117,12 +117,17 @@ describe("Product Site", () => {
     expect(koreanSupport).toContain("cdrootdev@gmail.com");
   });
 
-  it("keeps the Google site ownership verification file published", () => {
-    const verification = readProjectFile("site/google2fb91fbcc8fa4685.html");
+  it("keeps the Google site ownership verification files published", () => {
+    const verificationFiles = [
+      "google2fb91fbcc8fa4685.html",
+      "google9b7501b85587963e.html"
+    ];
 
-    expect(verification.trim()).toBe(
-      "google-site-verification: google2fb91fbcc8fa4685.html"
-    );
+    for (const file of verificationFiles) {
+      const verification = readProjectFile(`site/${file}`);
+
+      expect(verification.trim()).toBe(`google-site-verification: ${file}`);
+    }
   });
 
   it("does not expose local-only release notes or fake install links", () => {
